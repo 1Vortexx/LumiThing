@@ -146,12 +146,14 @@ app.on('second-instance', () => {
 })
 
 autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = false
 autoUpdater.on('update-downloaded', () => {
   mainWindow?.webContents.send('updateDownloaded')
 })
 autoUpdater.on('download-progress', progress => {
   mainWindow?.webContents.send('updateProgress', Math.round(progress.percent))
 })
+autoUpdater.on('error', () => {})
 
 app.on('ready', async () => {
   log('Welcome!', 'LumiThing')
@@ -529,7 +531,7 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.CheckUpdate, async () => {
     const currentVersion = 'v' + app.getVersion()
-    const latestVersion = await getLatestVersion()
+    const latestVersion = await getLatestVersion().catch(() => null)
     if (!latestVersion) return null
 
     return {
@@ -540,7 +542,7 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.DownloadUpdate, async () => {
-    await autoUpdater.downloadUpdate()
+    await autoUpdater.downloadUpdate().catch(() => null)
   })
 
   ipcMain.handle(IPCHandler.QuitAndInstall, () => {
