@@ -18,6 +18,15 @@ import { updateTime } from './time.js'
 
 let storage = {}
 
+function broadcast(type: string, data: unknown) {
+  const wss = serverManager.getServer()
+  if (!wss) return
+  const msg = JSON.stringify({ type, data })
+  wss.clients.forEach((ws: import('../types/WebSocketServer.js').AuthenticatedWebSocket) => {
+    if (ws.authenticated && ws.readyState === WebSocket.OPEN) ws.send(msg)
+  })
+}
+
 const storageValueHandlers: Record<string, (value: unknown) => void> = {
   launchOnStartup: async value => {
     app.setLoginItemSettings({
@@ -32,6 +41,7 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   brightness: async value => {
     await setBrightnessSmooth(null, value as number)
   },
+  bgStyle: value => broadcast('bgstyle', value),
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null

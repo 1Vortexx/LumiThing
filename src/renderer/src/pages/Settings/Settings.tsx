@@ -18,6 +18,7 @@ enum Tab {
   Client,
   Appearance,
   Startup,
+  Buttons,
   Advanced,
   Logs,
   About
@@ -105,6 +106,13 @@ const Settings: React.FC = () => {
               </>
             ) : null}
             <button
+              onClick={() => setCurrentTab(Tab.Buttons)}
+              data-active={currentTab === Tab.Buttons}
+            >
+              <span className="material-icons">developer_board</span>
+              Buttons
+            </button>
+            <button
               onClick={() => setCurrentTab(Tab.About)}
               data-active={currentTab === Tab.About}
             >
@@ -125,6 +133,8 @@ const Settings: React.FC = () => {
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
               <LogsTab />
+            ) : currentTab === Tab.Buttons ? (
+              <ButtonsTab />
             ) : currentTab === Tab.About ? (
               <AboutTab />
             ) : null}
@@ -644,6 +654,8 @@ const Patch: React.FC<{
 
 const AppearanceTab: React.FC = () => {
   const [darkMode, setDarkMode] = useState(true)
+  const [loaded, setLoaded] = useState(false)
+  const settings = useRef<{ bgStyle?: string }>({})
 
   useEffect(() => {
     if (darkMode === false) {
@@ -652,6 +664,16 @@ const AppearanceTab: React.FC = () => {
       }, 100)
     }
   }, [darkMode])
+
+  useEffect(() => {
+    async function loadSettings() {
+      settings.current = {
+        bgStyle: ((await window.api.getStorageValue('bgStyle')) || 'full') as string
+      }
+      setLoaded(true)
+    }
+    loadSettings()
+  }, [])
 
   return (
     <div className={styles.settingsTab}>
@@ -663,6 +685,18 @@ const AppearanceTab: React.FC = () => {
         value={darkMode}
         onChange={value => setDarkMode(value)}
       />
+      {loaded && (
+        <SelectSetting
+          label="Album Art Background"
+          description="How album art is shown behind the media player on the Car Thing."
+          defaultValue={settings.current.bgStyle}
+          options={[
+            { value: 'full', label: 'Full bleed' },
+            { value: 'thumbnail', label: 'Thumbnail (200×200)' }
+          ]}
+          onChange={value => window.api.setStorageValue('bgStyle', value as string)}
+        />
+      )}
     </div>
   )
 }
@@ -974,7 +1008,7 @@ const AboutTab: React.FC = () => {
       <div className={styles.app}>
         <img src={channel === 'nightly' ? iconNightly : icon} alt="" />
         <div className={styles.info}>
-          <h2>GlanceThing{channel === 'nightly' ? ' Nightly' : ''}</h2>
+          <h2>LumiThing{channel === 'nightly' ? ' Nightly' : ''}</h2>
           <p
             onClick={() => setTimesClicked(t => (t += 1))}
             className={styles.version}
@@ -985,30 +1019,63 @@ const AboutTab: React.FC = () => {
       </div>
       <h2>Credits</h2>
       <div className={styles.credit}>
+        <img src="https://itsvortexx.space/pfp.png" alt="" />
+        <div className={styles.info}>
+          <a href="https://itsvortexx.space" target="_blank" rel="noreferrer">
+            1Vortexx
+          </a>
+          <p>Primary LumiThing Developer</p>
+        </div>
+      </div>
+      <div className={styles.credit}>
         <img src="https://api.bludood.com/avatar?size=48" alt="" />
         <div className={styles.info}>
           <a href="https://bludood.com" target="_blank" rel="noreferrer">
             BluDood
           </a>
-          <p>GlanceThing Developer</p>
+          <p>Developer and creator of GlanceThing, LumiThing's base and inspiration</p>
         </div>
       </div>
-      <div className={styles.credit}>
-        <img
-          src="https://avatars.githubusercontent.com/u/131838720?size=48"
-          alt=""
-        />
-        <div className={styles.info}>
-          <a
-            href="https://github.com/ItsRiprod"
-            target="_blank"
-            rel="noreferrer"
+    </div>
+  )
+}
+
+const ButtonsTab: React.FC = () => {
+  const [shortcuts, setShortcuts] = useState<{ id: string; name?: string; command: string }[]>([])
+  const [buttons, setButtons] = useState<Record<string, string | null>>({ '1': null, '2': null, '3': null, '4': null })
+
+  useEffect(() => {
+    window.api.getShortcuts().then(setShortcuts)
+    window.api.getButtonShortcuts().then(setButtons)
+  }, [])
+
+  async function assign(btn: string, id: string | null) {
+    const next = { ...buttons, [btn]: id }
+    setButtons(next)
+    await window.api.setButtonShortcuts(next)
+  }
+
+  return (
+    <div>
+      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '16px' }}>
+        Assign a shortcut to each physical preset button (1–4) on the top of the Car Thing.
+      </p>
+      {(['1', '2', '3', '4'] as const).map(btn => (
+        <div className={styles.selectSetting} key={btn}>
+          <div className={styles.text}>
+            <p className={styles.label}>Button {btn}</p>
+          </div>
+          <select
+            value={buttons[btn] ?? ''}
+            onChange={e => assign(btn, e.target.value || null)}
           >
-            ItsRiprod
-          </a>
-          <p>Developer of DeskThing, heavily inspired this project</p>
+            <option value=''>— None —</option>
+            {shortcuts.map(s => (
+              <option key={s.id} value={s.id}>{s.name ?? s.id}</option>
+            ))}
+          </select>
         </div>
-      </div>
+      ))}
     </div>
   )
 }

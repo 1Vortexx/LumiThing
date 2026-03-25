@@ -1,7 +1,7 @@
 {
-  "name": "glancething",
-  "version": "0.0.15",
-  "description": "Desktop application for GlanceThing",
+  "name": "lumithing",
+  "version": "1.0.0",
+  "description": "Desktop application for LumiThing",
   "main": "./out/main/index.js",
   "author": "BluDood",
   "homepage": "https://github.com/BluDood/GlanceThing",
@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/open-sans": "^5.2.7",
     "@fontsource/material-icons": "^5.2.7",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
     "axios": "^1.13.6",
     "electron-updater": "^6.8.3",
     "moment": "^2.30.1",

@@ -117,7 +117,7 @@ const SpotifyAPISetup: React.FC<SpotifyAPISetupProps> = ({
     <div className={styles.step}>
       <h2>Step 1: Spotify API Setup</h2>
       <p>
-        For controlling your Spotify playback on GlanceThing, you&apos;ll
+        For controlling your Spotify playback on LumiThing, you&apos;ll
         need to set up a Spotify application.
       </p>
       <p>
@@ -262,13 +262,13 @@ const TokenSetup: React.FC<TokenSetupProps> = ({ onStepComplete }) => {
     <div className={styles.step}>
       <h2>Step 2: Spotify Web Token Setup</h2>
       <p>
-        To enable realtime playback updates, GlanceThing needs an extra
+        To enable realtime playback updates, LumiThing needs an extra
         token you can get from the Spotify Web Player.
       </p>
       <p>
         Follow the steps in{' '}
         <a
-          href="https://github.com/BluDood/GlanceThing/wiki/Getting-your-Spotify-token"
+          href="https://github.com/BluDood/LumiThing/wiki/Getting-your-Spotify-token"
           target="_blank"
           rel="noreferrer"
         >

@@ -1,46 +1,173 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 
 import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
+import { MediaContext } from '@/contexts/MediaContext.tsx'
+import { SleepContext } from '@/contexts/SleepContext.tsx'
 
-import FullescreenPlayer from './components/FullscreenPlayer/FullscreenPlayer.tsx'
+import Background, { BgStyle } from '@/components/Background/Background.tsx'
+import TopBar from '@/components/TopBar/TopBar.tsx'
+import HomeView from '@/components/HomeView/HomeView.tsx'
+import NowPlaying from '@/components/NowPlaying/NowPlaying.tsx'
+import LibraryView from '@/components/LibraryView/LibraryView.tsx'
+import SettingsView, { loadSettings, SettingsValues } from '@/components/SettingsView/SettingsView.tsx'
 import LoadingScreen from '@/components/LoadingScreen/LoadingScreen.tsx'
-import UpdateScreen from './components/UpdateScreen/UpdateScreen.tsx'
-import Statusbar from '@/components/Statusbar/Statusbar.tsx'
-import Widgets from '@/components/Widgets/Widgets.tsx'
+import UpdateScreen from '@/components/UpdateScreen/UpdateScreen.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
+import ButtonToast from '@/components/ButtonToast/ButtonToast.tsx'
+
+import { extractAccentColor } from '@/lib/colorExtract.ts'
 
 import styles from './App.module.css'
 
+export type Tab = 'home' | 'nowplaying' | 'library' | 'settings'
+
+type ButtonShortcuts = Record<'1' | '2' | '3' | '4', string | null>
+interface ShortcutInfo { id: string; name?: string }
+
 const App: React.FC = () => {
   const { blurred } = useContext(AppBlurContext)
-  const { ready } = useContext(SocketContext)
-  const [playerShown, setPlayerShown] = useState(false)
+  const { ready, socket } = useContext(SocketContext)
+  const { image, playerData, actions } = useContext(MediaContext)
+  const { setSleepState } = useContext(SleepContext)
 
+  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const activeTabRef = useRef<Tab>('home')
+  const navigate = (tab: Tab) => { activeTabRef.current = tab; setActiveTab(tab) }
+
+  const [settings, setSettings] = useState<SettingsValues>(loadSettings)
+
+  const [buttonShortcuts, setButtonShortcuts] = useState<ButtonShortcuts>({ '1': null, '2': null, '3': null, '4': null })
+  const [serverTime, setServerTime] = useState<{ time: string; date: string } | null>(null)
+  const [bgStyle, setBgStyle] = useState<BgStyle>('full')
+  const buttonShortcutsRef = useRef(buttonShortcuts)
+  buttonShortcutsRef.current = buttonShortcuts
+
+  // Shortcut name + icon lookup
+  const [shortcutMap, setShortcutMap] = useState<Record<string, ShortcutInfo>>({})
+  const [shortcutIcons, setShortcutIcons] = useState<Record<string, string>>({})
+  const shortcutMapRef = useRef(shortcutMap)
+  const shortcutIconsRef = useRef(shortcutIcons)
+  shortcutMapRef.current = shortcutMap
+  shortcutIconsRef.current = shortcutIcons
+
+  // Toast state
+  const [toast, setToast] = useState<{ btn: string; name: string; icon: string | null } | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const actionsRef = useRef(actions)
+  const socketRef = useRef(socket)
+  const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastImageRef = useRef<string | null>(null)
+
+  actionsRef.current = actions
+  socketRef.current = socket
+
+  // Listen for apps list, buttons assignments, and app icons
   useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setPlayerShown(s => !s)
+    if (!socket) return
+    const listener = (e: MessageEvent) => {
+      const { type, action, data } = JSON.parse(e.data)
+      if (type === 'time') {
+        setServerTime(data)
+      } else if (type === 'bgstyle') {
+        setBgStyle(data as BgStyle)
+      } else if (type === 'buttons') {
+        setButtonShortcuts(data)
+      } else if (type === 'apps' && !action) {
+        const map: Record<string, ShortcutInfo> = {}
+        for (const s of data as ShortcutInfo[]) map[s.id] = s
+        setShortcutMap(map)
+      } else if (type === 'apps' && action === 'image') {
+        setShortcutIcons(prev => ({ ...prev, [data.id]: data.image }))
+      }
+    }
+    socket.addEventListener('message', listener)
+    socket.send(JSON.stringify({ type: 'time' }))
+    socket.send(JSON.stringify({ type: 'bgstyle' }))
+    return () => socket.removeEventListener('message', listener)
+  }, [socket])
+
+  // Dynamic accent color from album art
+  useEffect(() => {
+    if (!image || image === lastImageRef.current) return
+    lastImageRef.current = image
+    extractAccentColor(image).then(color => {
+      document.documentElement.style.setProperty('--accent', color)
+      const m = color.match(/\d+/g)
+      if (m) document.documentElement.style.setProperty('--accent-rgb', `${m[0]}, ${m[1]}, ${m[2]}`)
+    })
+  }, [image])
+
+  // Sleep timer
+  useEffect(() => {
+    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current)
+    const secs = parseInt(settings.sleepTimer, 10)
+    if (secs > 0 && ready) {
+      sleepTimerRef.current = setTimeout(() => setSleepState('screensaver'), secs * 1000)
+    }
+    return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current) }
+  }, [settings.sleepTimer, ready, playerData?.track.name, setSleepState])
+
+  // Dial / keyboard input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          if (activeTabRef.current === 'home') navigate('nowplaying')
+          else actionsRef.current.playPause()
+          break
+        case 'ArrowRight':
+          e.preventDefault(); actionsRef.current.skipForward(); break
+        case 'ArrowLeft':
+          e.preventDefault(); actionsRef.current.skipBackward(); break
+        case 'Escape':
+          e.preventDefault()
+          navigate('home')
+          break
+        case '1': case '2': case '3': case '4': {
+          const id = buttonShortcutsRef.current[e.key as '1'|'2'|'3'|'4']
+          if (!id) break
+          socketRef.current?.send(JSON.stringify({ type: 'apps', action: 'open', data: id }))
+          const info = shortcutMapRef.current[id]
+          const name = info?.name ?? info?.id ?? id
+          const icon = shortcutIconsRef.current[id] ?? null
+          setToast({ btn: e.key, name, icon })
+          if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+          toastTimerRef.current = setTimeout(() => setToast(null), 1800)
+          break
+        }
       }
     }
 
-    document.addEventListener('keydown', listener)
-
-    return () => {
-      document.removeEventListener('keydown', listener)
-    }
-  })
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <>
       <div className={styles.app} data-blurred={blurred || !ready}>
-        <Statusbar />
-        <Widgets />
-        <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
+        <Background image={image} useStatic={activeTab !== 'nowplaying'} bgStyle={bgStyle} />
+        <TopBar clockFormat="12h" serverTime={serverTime} />
+
+        <main className={styles.content}>
+          {activeTab === 'home'       && <HomeView onNavigate={navigate} />}
+          {activeTab === 'nowplaying' && <NowPlaying showVisualizer={settings.visualizer} bgStyle={bgStyle} />}
+          {activeTab === 'library'    && <LibraryView />}
+          {activeTab === 'settings'   && <SettingsView onChange={setSettings} />}
+        </main>
       </div>
+
+      <ButtonToast
+        buttonNum={toast?.btn ?? null}
+        name={toast?.name ?? null}
+        icon={toast?.icon ?? null}
+      />
       <LoadingScreen />
       <UpdateScreen />
-      <Menu />
+      <Menu onNavigate={navigate} />
     </>
   )
 }

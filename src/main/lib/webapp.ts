@@ -97,7 +97,7 @@ export function hasCustomWebApp() {
 export async function importCustomWebApp() {
   const res = await dialog.showOpenDialog({
     properties: ['openFile'],
-    filters: [{ name: 'GlanceThing Client', extensions: ['zip'] }]
+    filters: [{ name: 'LumiThing Client', extensions: ['zip'] }]
   })
 
   if (res.canceled) return false

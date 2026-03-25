@@ -1,6 +1,6 @@
 import { exec } from 'child_process'
 
-import { getShortcutImage, getShortcuts } from '../shortcuts.js'
+import { getButtonShortcuts, getShortcutImage, getShortcuts } from '../shortcuts.js'
 import { getParsedPlatformCommand } from '../utils.js'
 
 import {
@@ -51,10 +51,6 @@ export const actions: HandlerAction[] = [
 
 export const handle: HandlerFunction = async ws => {
   const shortcuts = getShortcuts()
-  ws.send(
-    JSON.stringify({
-      type: 'apps',
-      data: shortcuts
-    })
-  )
+  ws.send(JSON.stringify({ type: 'apps', data: shortcuts }))
+  ws.send(JSON.stringify({ type: 'buttons', data: getButtonShortcuts() }))
 }

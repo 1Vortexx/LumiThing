@@ -1,11 +1,24 @@
 .app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   overflow: hidden;
-  position: relative;
+  transition: opacity 0.5s ease;
 }
 
 .app[data-blurred='true'] {
-  filter: blur(5px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Content area below TopBar */
+.content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
 }

@@ -1,5 +1,5 @@
-appId: com.bludood.glancething.nightly
-productName: GlanceThing Nightly
+appId: com.lumithing.app.nightly
+productName: LumiThing Nightly
 directories:
   buildResources: build/nightly
 files:
@@ -13,7 +13,7 @@ asarUnpack:
   - resources/common/**
   - resources/nightly/**
 win:
-  executableName: GlanceThingNightly
+  executableName: LumiThingNightly
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -46,4 +46,4 @@ publish:
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
 extraMetadata:
-  name: glancething-nightly
+  name: lumithing-nightly

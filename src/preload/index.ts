@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 interface Shortcut {
   id: string
+  name?: string
   command: string
 }
 
@@ -25,6 +26,8 @@ enum IPCHandler {
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
   UpdateShortcut = 'updateShortcut',
+  GetButtonShortcuts = 'getButtonShortcuts',
+  SetButtonShortcuts = 'setButtonShortcuts',
   IsDevMode = 'isDevMode',
   GetBrightness = 'getBrightness',
   SetBrightness = 'setBrightness',
@@ -46,8 +49,11 @@ enum IPCHandler {
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
+  DownloadUpdate = 'downloadUpdate',
+  QuitAndInstall = 'quitAndInstall',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
 }
 
 // Custom APIs for renderer
@@ -87,6 +93,9 @@ const api = {
     ipcRenderer.invoke(IPCHandler.RemoveShortcut, shortcut),
   updateShortcut: (shortcut: Shortcut) =>
     ipcRenderer.invoke(IPCHandler.UpdateShortcut, shortcut),
+  getButtonShortcuts: () => ipcRenderer.invoke(IPCHandler.GetButtonShortcuts),
+  setButtonShortcuts: (buttons: Record<string, string | null>) =>
+    ipcRenderer.invoke(IPCHandler.SetButtonShortcuts, buttons),
   isDevMode: () => ipcRenderer.invoke(IPCHandler.IsDevMode),
   getBrightness: () => ipcRenderer.invoke(IPCHandler.GetBrightness),
   setBrightness: (brightness: number) =>
@@ -123,8 +132,12 @@ const api = {
   openDevTools: () => ipcRenderer.invoke(IPCHandler.OpenDevTools),
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
+  downloadUpdate: () => ipcRenderer.invoke(IPCHandler.DownloadUpdate),
+  quitAndInstall: () => ipcRenderer.invoke(IPCHandler.QuitAndInstall),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
-  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port)
+  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
+  saveShortcutIconFromDataUrl: (id: string, dataUrl: string) =>
+    ipcRenderer.invoke(IPCHandler.SaveShortcutIconFromDataUrl, id, dataUrl)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

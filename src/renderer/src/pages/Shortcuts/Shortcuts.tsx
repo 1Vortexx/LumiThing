@@ -3,15 +3,20 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { ModalContext } from '@/contexts/ModalContext.js'
 
 import styles from './Shortcuts.module.css'
+import IconPicker from './IconPicker.js'
 
 interface Shortcut {
   id: string
+  name?: string
   command: string
 }
+
+type ImageTab = 'upload' | 'icon'
 
 const Shortcuts: React.FC = () => {
   const { openModals, setModalOpen } = useContext(ModalContext)
   const uploadImageRef = useRef<HTMLImageElement>(null)
+  const editUploadImageRef = useRef<HTMLImageElement>(null)
 
   function onClickBackground(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === e.currentTarget) {
@@ -23,13 +28,18 @@ const Shortcuts: React.FC = () => {
 
   const [adding, setAdding] = useState<boolean>(false)
   const [newShortcutCommand, setNewShortcutCommand] = useState<string>('')
+  const [newShortcutName, setNewShortcutName] = useState<string>('')
   const [hasSetImage, setHasSetImage] = useState(false)
+  const [addImageTab, setAddImageTab] = useState<ImageTab>('upload')
 
   const [editing, setEditing] = useState<boolean>(false)
   const [editingShortcut, setEditingShortcut] = useState<Shortcut>({
     id: '',
+    name: '',
     command: ''
   })
+  const [editImageTab, setEditImageTab] = useState<ImageTab>('upload')
+  const [editHasSetImage, setEditHasSetImage] = useState(false)
 
   useEffect(() => {
     window.api.getShortcuts().then(shortcuts => {
@@ -44,6 +54,7 @@ const Shortcuts: React.FC = () => {
 
     const shortcut: Shortcut = {
       id,
+      name: newShortcutName,
       command
     }
 
@@ -53,8 +64,10 @@ const Shortcuts: React.FC = () => {
 
     setAdding(false)
     setNewShortcutCommand('')
+    setNewShortcutName('')
     uploadImageRef.current!.src = ''
     setHasSetImage(false)
+    setAddImageTab('upload')
   }
 
   async function removeShortcut(id: string) {
@@ -77,14 +90,42 @@ const Shortcuts: React.FC = () => {
     )
 
     setEditing(false)
+    setEditHasSetImage(false)
+    setEditImageTab('upload')
   }
 
   async function handleAddShortcutClose() {
     window.api.removeNewShortcutImage()
     setAdding(false)
     setNewShortcutCommand('')
+    setNewShortcutName('')
     uploadImageRef.current!.src = ''
     setHasSetImage(false)
+    setAddImageTab('upload')
+  }
+
+  async function handleAddIconSelect(dataUrl: string) {
+    await window.api.saveShortcutIconFromDataUrl('new', dataUrl)
+    uploadImageRef.current!.src = `shortcut://new?${Date.now()}`
+    setHasSetImage(true)
+  }
+
+  async function handleEditIconSelect(dataUrl: string) {
+    await window.api.saveShortcutIconFromDataUrl(
+      editingShortcut.id,
+      dataUrl
+    )
+    if (editUploadImageRef.current) {
+      editUploadImageRef.current.src = `shortcut://${editingShortcut.id}?${Date.now()}`
+    }
+    setEditHasSetImage(true)
+  }
+
+  function openEditing(shortcut: Shortcut) {
+    setEditing(true)
+    setEditingShortcut(shortcut)
+    setEditHasSetImage(false)
+    setEditImageTab('upload')
   }
 
   return (
@@ -99,10 +140,7 @@ const Shortcuts: React.FC = () => {
             <div
               className={styles.shortcut}
               key={shortcut.id}
-              onClick={() => {
-                setEditing(true)
-                setEditingShortcut(shortcut)
-              }}
+              onClick={() => openEditing(shortcut)}
             >
               <img src={`shortcut://${shortcut.id}`} />
             </div>
@@ -118,6 +156,8 @@ const Shortcuts: React.FC = () => {
           ) : null}
         </div>
       ) : null}
+
+      {/* Add Shortcut Modal */}
       <div
         className={styles.modal}
         data-shown={adding}
@@ -132,21 +172,61 @@ const Shortcuts: React.FC = () => {
               <span className="material-icons">close</span>
             </button>
           </h1>
-          <button
-            className={styles.uploadImage}
-            onClick={async () => {
-              const res = await window.api.uploadShortcutImage('new')
-              if (!res) return
-              uploadImageRef.current!.src = `shortcut://new?${Date.now()}`
-              setHasSetImage(true)
-            }}
-          >
-            <img ref={uploadImageRef} alt="" />
-            <span className={styles.hint}>
+
+          {/* Tab switcher */}
+          <div className={styles.tabSwitcher}>
+            <button
+              className={styles.tabBtn}
+              data-active={addImageTab === 'upload'}
+              onClick={() => setAddImageTab('upload')}
+            >
               <span className="material-icons">upload</span>
-              Image
-            </span>
-          </button>
+              Upload Image
+            </button>
+            <button
+              className={styles.tabBtn}
+              data-active={addImageTab === 'icon'}
+              onClick={() => setAddImageTab('icon')}
+            >
+              <span className="material-icons">grid_view</span>
+              Pick Icon
+            </button>
+          </div>
+
+          {addImageTab === 'upload' ? (
+            <button
+              className={styles.uploadImage}
+              onClick={async () => {
+                const res = await window.api.uploadShortcutImage('new')
+                if (!res) return
+                uploadImageRef.current!.src = `shortcut://new?${Date.now()}`
+                setHasSetImage(true)
+              }}
+            >
+              <img ref={uploadImageRef} alt="" />
+              <span className={styles.hint}>
+                <span className="material-icons">upload</span>
+                Image
+              </span>
+            </button>
+          ) : (
+            <div className={styles.iconPickerWrapper}>
+              <img
+                ref={uploadImageRef}
+                alt=""
+                className={styles.iconPreviewImg}
+                data-visible={hasSetImage}
+              />
+              <IconPicker onSelect={handleAddIconSelect} />
+            </div>
+          )}
+
+          <input
+            type="text"
+            placeholder="Name (optional)"
+            value={newShortcutName}
+            onChange={e => setNewShortcutName(e.target.value)}
+          />
           <input
             type="text"
             placeholder="Command"
@@ -163,6 +243,8 @@ const Shortcuts: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Shortcut Modal */}
       <div
         className={styles.modal}
         data-shown={editing}
@@ -175,6 +257,83 @@ const Shortcuts: React.FC = () => {
               <span className="material-icons">close</span>
             </button>
           </h1>
+
+          {/* Tab switcher for edit */}
+          <div className={styles.tabSwitcher}>
+            <button
+              className={styles.tabBtn}
+              data-active={editImageTab === 'upload'}
+              onClick={() => setEditImageTab('upload')}
+            >
+              <span className="material-icons">upload</span>
+              Upload Image
+            </button>
+            <button
+              className={styles.tabBtn}
+              data-active={editImageTab === 'icon'}
+              onClick={() => setEditImageTab('icon')}
+            >
+              <span className="material-icons">grid_view</span>
+              Pick Icon
+            </button>
+          </div>
+
+          {editImageTab === 'upload' ? (
+            <button
+              className={styles.uploadImage}
+              onClick={async () => {
+                const res = await window.api.uploadShortcutImage(
+                  editingShortcut.id
+                )
+                if (!res) return
+                if (editUploadImageRef.current) {
+                  editUploadImageRef.current.src = `shortcut://${editingShortcut.id}?${Date.now()}`
+                }
+                setEditHasSetImage(true)
+              }}
+            >
+              <img
+                ref={editUploadImageRef}
+                src={
+                  editingShortcut.id
+                    ? `shortcut://${editingShortcut.id}`
+                    : ''
+                }
+                alt=""
+              />
+              <span className={styles.hint}>
+                <span className="material-icons">upload</span>
+                Image
+              </span>
+            </button>
+          ) : (
+            <div className={styles.iconPickerWrapper}>
+              <img
+                ref={editUploadImageRef}
+                src={
+                  editingShortcut.id && editHasSetImage
+                    ? `shortcut://${editingShortcut.id}?${Date.now()}`
+                    : ''
+                }
+                alt=""
+                className={styles.iconPreviewImg}
+                data-visible={editHasSetImage}
+              />
+              <IconPicker onSelect={handleEditIconSelect} />
+            </div>
+          )}
+
+          <input
+            type="text"
+            placeholder="Name (optional)"
+            value={editingShortcut.name ?? ''}
+            onChange={e =>
+              setEditingShortcut({
+                ...editingShortcut,
+                name: e.target.value
+              })
+            }
+          />
           <input
             type="text"
             placeholder="Command"

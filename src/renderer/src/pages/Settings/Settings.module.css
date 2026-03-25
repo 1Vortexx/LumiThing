@@ -21,11 +21,12 @@
 }
 
 .box {
-  width: 600px;
-  height: 400px;
+  width: 650px;
+  height: 460px;
   padding: 15px;
-  background: #111;
-  border-radius: 5px;
+  background: #111827;
+  border: 1px solid rgba(0, 180, 216, 0.12);
+  border-radius: 16px;
   transition: transform 200ms ease;
   transform: scale(1.05);
 
@@ -42,6 +43,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 5px;
+  color: #e8f4f8;
 }
 
 .box h2 button {
@@ -50,6 +52,15 @@
   align-items: center;
   cursor: pointer;
   transition: 200ms ease;
+  color: rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.box h2 button:hover {
+  color: #ff4f4f;
+  background: rgba(255, 79, 79, 0.15);
+  opacity: 1;
 }
 
 .content {
@@ -72,14 +83,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px;
-  border-radius: 5px;
+  padding: 8px 10px;
+  border-radius: 8px;
   transition: 200ms ease;
   cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
 }
 
-.tabs button:is(:hover, [data-active='true']) {
-  background: #222;
+.tabs button:hover {
+  background: rgba(0, 180, 216, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+.tabs button[data-active='true'] {
+  background: rgba(0, 180, 216, 0.12);
+  color: #00b4d8;
 }
 
 .tab {
@@ -117,9 +137,10 @@
   gap: 5px;
   font-family: monospace;
   user-select: text;
-  background: #222;
+  background: #0d1728;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 180, 216, 0.08);
   flex: 1;
   max-height: 288px; /* reasonable css crashout */
   overflow-y: auto;
@@ -142,15 +163,15 @@
   padding: 5px;
   font-size: 16px;
   border-radius: 5px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
+  background: #0d1728;
+  color: #e8f4f8;
+  border: 1px solid rgba(0, 180, 216, 0.15);
   transition: 200ms ease;
 }
 
 .logsTab .controls select:focus {
   outline: none;
-  border: 1px solid #555;
+  border: 1px solid rgba(0, 180, 216, 0.4);
 }
 
 .logsTab .controls .buttons {
@@ -176,7 +197,7 @@
 
 .aboutTab .app .version {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .credit {
@@ -188,7 +209,9 @@
 
 .credit img {
   width: 48px;
+  height: 48px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .credit .info {
@@ -197,7 +220,7 @@
 }
 
 .credit .info a {
-  color: #fff;
+  color: #e8f4f8;
   text-decoration: none;
   font-size: 16px;
   font-weight: 600;
@@ -205,7 +228,7 @@
 
 .credit .info p {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .toggleSetting {
@@ -215,7 +238,7 @@
 
 .toggleSetting .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .settingsTab {
@@ -232,7 +255,7 @@
 
 .inputWithSubmitSetting .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .inputWithSubmitSetting .form {
@@ -245,12 +268,12 @@
 }
 
 .error {
-  color: #f00;
+  color: #ff4f4f;
   animation: appear 500ms ease;
 }
 
 .success {
-  color: #1ed760;
+  color: #00e5a0;
   animation: appear 500ms ease;
 }
 
@@ -263,22 +286,22 @@
 
 .selectSetting .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .selectSetting select {
   padding: 5px;
   font-size: 16px;
   border-radius: 5px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
+  background: #0d1728;
+  color: #e8f4f8;
+  border: 1px solid rgba(0, 180, 216, 0.15);
   transition: 200ms ease;
 }
 
 .selectSetting select:focus {
   outline: none;
-  border: 1px solid #555;
+  border: 1px solid rgba(0, 180, 216, 0.4);
 }
 
 .sliderSetting {
@@ -294,7 +317,7 @@
 
 .sliderSetting .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .sliderSetting input {
@@ -302,15 +325,15 @@
   padding: 5px;
   font-size: 16px;
   border-radius: 5px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
+  background: #0d1728;
+  color: #e8f4f8;
+  border: 1px solid rgba(0, 180, 216, 0.15);
   transition: 200ms ease;
 }
 
 .sliderSetting input:focus {
   outline: none;
-  border: 1px solid #555;
+  border: 1px solid rgba(0, 180, 216, 0.4);
 }
 
 .patches {
@@ -326,24 +349,26 @@
   align-items: center;
   gap: 10px;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 8px;
   transition: 200ms ease;
 }
 
 .patch:hover {
-  background: #222;
+  background: rgba(0, 180, 216, 0.06);
 }
 
 .patch h3 {
   font-size: 16px;
+  color: #e8f4f8;
 }
 
 .patch p {
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .patch > span {
-  color: #1ed760;
+  color: #00e5a0;
 }
 
 .patch button {
@@ -364,7 +389,7 @@
 
 .buttonSetting .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .buttonSetting button {
@@ -384,7 +409,7 @@
 
 .screensaverSettings .description {
   font-size: 14px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .screensaverSettings .actions {
@@ -403,18 +428,18 @@
   gap: 8px;
   margin-top: 10px;
   padding: 8px 12px;
-  background-color: rgba(30, 215, 96, 0.1);
-  border-left: 3px solid #1ed760;
+  background-color: rgba(0, 229, 160, 0.1);
+  border-left: 3px solid #00e5a0;
   border-radius: 4px;
-  color: #1ed760;
+  color: #00e5a0;
   font-size: 14px;
   animation: appear 500ms ease;
 }
 
 .screensaverSettings .status[data-type='error'] {
-  background-color: rgba(255, 0, 0, 0.1);
-  border-left: 3px solid #ff4040;
-  color: #ff6b6b;
+  background-color: rgba(255, 79, 79, 0.1);
+  border-left: 3px solid #ff4f4f;
+  color: #ff4f4f;
 }
 
 .patches .status {
@@ -422,10 +447,10 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background-color: rgb(0, 100, 255, 0.1);
-  border-left: 3px solid #0096ff;
+  background-color: rgba(0, 180, 216, 0.1);
+  border-left: 3px solid #00b4d8;
   border-radius: 4px;
-  color: #0096ff;
+  color: #00b4d8;
   font-size: 14px;
   animation: appear 500ms ease;
   margin-bottom: 10px;
@@ -440,9 +465,9 @@
 }
 
 .customPort .notice[data-type='success'] {
-  color: #1ed760;
+  color: #00e5a0;
 }
 
 .customPort .notice[data-type='error'] {
-  color: #f00;
+  color: #ff4f4f;
 }

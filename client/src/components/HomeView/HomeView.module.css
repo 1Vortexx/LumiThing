@@ -1,0 +1,185 @@
+.home {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top: Now Playing card (70%) ─────────── */
+.playerCard {
+  flex: 7;
+  min-height: 0;
+  cursor: pointer;
+  position: relative;
+  background-color: rgba(20, 15, 30, 0.85);
+  background-size: cover;
+  background-position: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.playerCard:active {
+  opacity: 0.85;
+}
+
+.playerOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.55) 35%,
+    rgba(0, 0, 0, 0.1)  70%,
+    rgba(0, 0, 0, 0)    100%
+  );
+}
+
+/* Playing / paused badge top-left */
+.playingBadge {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ff6b6b;
+  text-transform: uppercase;
+}
+
+.playingBadge[data-playing='true'] {
+  color: #4cde80;
+  border-color: rgba(76, 222, 128, 0.4);
+  background: rgba(76, 222, 128, 0.08);
+}
+
+.playerInfo {
+  position: relative;
+  z-index: 2;
+  padding: 0 18px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.playerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.visualizerWrap {
+  flex-shrink: 0;
+  height: 36px;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+
+.playerName {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+}
+
+.playerArtist {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+.emptyLabel {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* ── Divider ─────────────────────────────── */
+.divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Bottom: shortcuts strip (30%) ────────── */
+.shortcuts {
+  flex: 3;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 24px;
+}
+
+.shortcut {
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s ease, transform 0.1s ease;
+  padding: 8px 4px;
+}
+
+.shortcut:active {
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+
+.shortcut .material-icons {
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.shortcutIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.shortcutLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcutEmpty {
+  flex: 1;
+  padding: 8px 4px;
+}

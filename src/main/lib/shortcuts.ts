@@ -9,6 +9,7 @@ import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
 
 interface Shortcut {
   id: string
+  name?: string
   command: string
 }
 
@@ -112,18 +113,34 @@ export function updateShortcut(shortcut: Shortcut) {
   setStorageValue('shortcuts', shortcuts)
 }
 
+export type ButtonShortcuts = Record<'1' | '2' | '3' | '4', string | null>
+
+export function getButtonShortcuts(): ButtonShortcuts {
+  const stored = getStorageValue('buttonShortcuts')
+  return (stored as ButtonShortcuts) ?? { '1': null, '2': null, '3': null, '4': null }
+}
+
+export function setButtonShortcuts(buttons: ButtonShortcuts) {
+  setStorageValue('buttonShortcuts', buttons)
+}
+
+export async function saveShortcutIconFromDataUrl(id: string, dataUrl: string) {
+  const base64 = dataUrl.split(',')[1]
+  const buf = Buffer.from(base64, 'base64')
+  const userData = app.getPath('userData')
+  const imageFolder = path.join(userData, 'shortcuts')
+  if (!fs.existsSync(imageFolder)) fs.mkdirSync(imageFolder)
+  const iconPath = path.join(imageFolder, `${id}.png`)
+  fs.writeFileSync(iconPath, buf)
+}
+
 export async function updateApps() {
   const wss = serverManager.getServer()
   if (!wss) return
 
   wss.clients.forEach(async (ws: AuthenticatedWebSocket) => {
     if (!ws.authenticated && ws.readyState !== WebSocket.OPEN) return
-
-    ws.send(
-      JSON.stringify({
-        type: 'apps',
-        data: getShortcuts()
-      })
-    )
+    ws.send(JSON.stringify({ type: 'apps', data: getShortcuts() }))
+    ws.send(JSON.stringify({ type: 'buttons', data: getButtonShortcuts() }))
   })
 }
