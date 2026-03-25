@@ -19,7 +19,7 @@ Your CarThing, reimagined.
 
 Linux, Windows, and Mac are all supported.
 
-1. Download LumiThing from [Releases](../../releases/).
+1. Download LumiThing from [Releases](../../releases/), or [Our Website](https://lumicore.itsvortexx.space).
 2. Open the downloaded file to install.
 3. Open the LumiThing desktop companion and follow the instructions to set up your CarThing.
 
