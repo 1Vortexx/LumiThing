@@ -44,7 +44,7 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime }) => {
         <span className={styles.date}>{displayDate}</span>
         <span className={styles.clock}>{displayTime}</span>
       </div>
-      <span className={styles.build}>LumiThing Astra1</span>
+      <span className={styles.build}>LumiThing Astra1.0.1</span>
     </div>
   )
 }

@@ -12,7 +12,6 @@ import NowPlaying from '@/components/NowPlaying/NowPlaying.tsx'
 import LibraryView from '@/components/LibraryView/LibraryView.tsx'
 import SettingsView, { loadSettings, SettingsValues } from '@/components/SettingsView/SettingsView.tsx'
 import LoadingScreen from '@/components/LoadingScreen/LoadingScreen.tsx'
-import UpdateScreen from '@/components/UpdateScreen/UpdateScreen.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 import ButtonToast from '@/components/ButtonToast/ButtonToast.tsx'
 
@@ -166,7 +165,6 @@ const App: React.FC = () => {
         icon={toast?.icon ?? null}
       />
       <LoadingScreen />
-      <UpdateScreen />
       <Menu onNavigate={navigate} />
     </>
   )
