@@ -563,8 +563,17 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.DownloadUpdate, async () => {
     if (app.isPackaged) {
-      await autoUpdater.checkForUpdates().catch(() => null)
-      await autoUpdater.downloadUpdate().catch(() => null)
+      const result = await autoUpdater.checkForUpdates().catch(err => {
+        sendUpdateLog(`Check failed: ${err?.message ?? String(err)}`)
+        return null
+      })
+      if (!result?.updateInfo) {
+        sendUpdateLog('No update info available, cannot download.')
+        return
+      }
+      await autoUpdater.downloadUpdate().catch(err => {
+        sendUpdateLog(`Download error: ${err?.message ?? String(err)}`)
+      })
     }
   })
 
