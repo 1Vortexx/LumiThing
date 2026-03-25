@@ -60,7 +60,10 @@ import {
   uploadShortcutImage,
   getShortcutImagePath,
   removeShortcutImage,
-  updateApps
+  updateApps,
+  getButtonShortcuts,
+  setButtonShortcuts,
+  saveShortcutIconFromDataUrl
 } from './lib/shortcuts.js'
 
 import {
@@ -78,6 +81,7 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import { autoUpdater } from 'electron-updater'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -114,7 +118,7 @@ function createWindow(): void {
 
       new Notification({
         title: 'Still Running!',
-        body: 'GlanceThing has been minimized to the system tray, and is still running in the background!'
+        body: 'LumiThing has been minimized to the system tray, and is still running in the background!'
       }).show()
     }
     mainWindow = null
@@ -141,8 +145,16 @@ app.on('second-instance', () => {
   }
 })
 
+autoUpdater.autoDownload = false
+autoUpdater.on('update-downloaded', () => {
+  mainWindow?.webContents.send('updateDownloaded')
+})
+autoUpdater.on('download-progress', progress => {
+  mainWindow?.webContents.send('updateProgress', Math.round(progress.percent))
+})
+
 app.on('ready', async () => {
-  log('Welcome!', 'GlanceThing')
+  log('Welcome!', 'LumiThing')
 
   const gotLock = app.requestSingleInstanceLock()
   if (!gotLock) return app.quit()
@@ -156,7 +168,7 @@ app.on('ready', async () => {
   ) {
     setStorageValue('devMode', true)
   }
-  if (isDev()) log('Running in development mode', 'GlanceThing')
+  if (isDev()) log('Running in development mode', 'LumiThing')
   electronApp.setAppUserModelId(`com.bludood.${app.getName()}`)
 
   const adbPath = await getAdbExecutable().catch(err => ({ err }))
@@ -226,6 +238,8 @@ enum IPCHandler {
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
   UpdateShortcut = 'updateShortcut',
+  GetButtonShortcuts = 'getButtonShortcuts',
+  SetButtonShortcuts = 'setButtonShortcuts',
   IsDevMode = 'isDevMode',
   GetBrightness = 'getBrightness',
   SetBrightness = 'setBrightness',
@@ -247,8 +261,11 @@ enum IPCHandler {
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
+  DownloadUpdate = 'downloadUpdate',
+  QuitAndInstall = 'quitAndInstall',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
 }
 
 async function setupIpcHandlers() {
@@ -377,6 +394,13 @@ async function setupIpcHandlers() {
     return removeShortcutImage('new')
   })
 
+  ipcMain.handle(
+    IPCHandler.SaveShortcutIconFromDataUrl,
+    async (_event, id, dataUrl) => {
+      return saveShortcutIconFromDataUrl(id, dataUrl)
+    }
+  )
+
   ipcMain.handle(IPCHandler.GetShortcuts, async () => {
     return getShortcuts()
   })
@@ -393,6 +417,13 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.UpdateShortcut, async (_event, shortcut) => {
     updateShortcut(shortcut)
+    await updateApps()
+  })
+
+  ipcMain.handle(IPCHandler.GetButtonShortcuts, () => getButtonShortcuts())
+
+  ipcMain.handle(IPCHandler.SetButtonShortcuts, async (_event, buttons) => {
+    setButtonShortcuts(buttons)
     await updateApps()
   })
 
@@ -508,6 +539,14 @@ async function setupIpcHandlers() {
     }
   })
 
+  ipcMain.handle(IPCHandler.DownloadUpdate, async () => {
+    await autoUpdater.downloadUpdate()
+  })
+
+  ipcMain.handle(IPCHandler.QuitAndInstall, () => {
+    autoUpdater.quitAndInstall()
+  })
+
   ipcMain.handle(IPCHandler.FindOpenPort, async () => {
     return await findOpenPort()
   })
@@ -528,7 +567,7 @@ async function setupTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `GlanceThing${isNightly ? ' Nightly' : ''} v${app.getVersion()}`,
+      label: `LumiThing${isNightly ? ' Nightly' : ''} v${app.getVersion()}`,
       enabled: false
     },
     {
@@ -555,7 +594,7 @@ async function setupTray() {
   tray.setContextMenu(contextMenu)
 
   tray.setToolTip(
-    `GlanceThing${isNightly ? ' Nightly' : ''} v${app.getVersion()}`
+    `LumiThing${isNightly ? ' Nightly' : ''} v${app.getVersion()}`
   )
 
   tray.on('click', () => {

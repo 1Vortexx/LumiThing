@@ -1,5 +1,5 @@
-appId: com.bludood.glancething
-productName: GlanceThing
+appId: com.lumithing.app
+productName: LumiThing
 directories:
   buildResources: build/stable
 files:
@@ -13,7 +13,7 @@ asarUnpack:
   - resources/common/**
   - resources/stable/**
 win:
-  executableName: GlanceThing
+  executableName: LumiThing
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -35,13 +35,14 @@ dmg:
 linux:
   target:
     - AppImage
-  maintainer: BluDood
+  maintainer: 1Vortexx
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: 1Vortexx
+  repo: LumiThing
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

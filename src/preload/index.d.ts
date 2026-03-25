@@ -75,6 +75,10 @@ declare global {
       } | null>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
+      saveShortcutIconFromDataUrl: (
+        id: string,
+        dataUrl: string
+      ) => Promise<void>
     }
   }
 }

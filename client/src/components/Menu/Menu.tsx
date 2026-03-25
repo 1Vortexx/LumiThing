@@ -1,3 +1,4 @@
+import { Tab } from '@/App.tsx'
 import { useContext, useEffect, useRef, useState, WheelEvent } from 'react'
 
 import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
@@ -7,7 +8,9 @@ import RestoreScreen from '../RestoreScreen/RestoreScreen.tsx'
 
 import styles from './Menu.module.css'
 
-const Menu: React.FC = () => {
+interface MenuProps { onNavigate: (tab: Tab) => void }
+
+const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
   const { setBlurred } = useContext(AppBlurContext)
   const { ready, socket } = useContext(SocketContext)
 
@@ -17,8 +20,18 @@ const Menu: React.FC = () => {
   const [selected, setSelected] = useState(1)
   const [restoring, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const lastMenuPressRef = useRef<number>(0)
 
   const elements = [
+    {
+      name: 'Settings',
+      icon: 'tune',
+      color: '#ffffff',
+      onClick: () => {
+        setShown(false)
+        onNavigate('settings')
+      }
+    },
     {
       name: 'Restore',
       icon: 'settings_backup_restore',
@@ -61,6 +74,15 @@ const Menu: React.FC = () => {
           })
         )
       }
+    },
+    {
+      name: 'Lock',
+      icon: 'lock',
+      color: '#ffb300',
+      onClick: () => {
+        setShown(false)
+        socket?.send(JSON.stringify({ type: 'lock' }))
+      }
     }
   ]
 
@@ -75,6 +97,13 @@ const Menu: React.FC = () => {
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.key === 'm') {
+        const now = Date.now()
+        if (now - lastMenuPressRef.current < 400) {
+          lastMenuPressRef.current = 0
+          socket?.send(JSON.stringify({ type: 'lock' }))
+          return
+        }
+        lastMenuPressRef.current = now
         setShown(s => !s)
         ;(document.activeElement as HTMLElement)?.blur()
         setTimeout(() => {

@@ -5,8 +5,8 @@
 }
 
 body {
-  background-color: #000;
-  color: #fff;
+  background-color: #080c14;
+  color: #e8f4f8;
   font-family: 'Open Sans Variable', sans-serif;
   user-select: none;
 }
@@ -22,7 +22,7 @@ button {
   all: unset;
   padding: 8px 16px;
   border-radius: 5px;
-  background-color: #0064ff;
+  background-color: #00b4d8;
   cursor: pointer;
   transition: opacity 200ms ease;
 }
@@ -50,9 +50,9 @@ input[type='password'] {
   all: unset;
   padding: 8px;
   border-radius: 5px;
-  background-color: #111;
-  color: #fff;
-  border: 1px solid #333;
+  background-color: #0d1728;
+  color: #e8f4f8;
+  border: 1px solid rgba(0, 180, 216, 0.15);
 }
 
 input[type='text']:read-only,

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 export async function getLatestVersion() {
   const res = await axios.get(
-    'https://api.github.com/repos/BluDood/GlanceThing/releases/latest',
+    'https://api.github.com/repos/1Vortexx/LumiThing/releases/latest',
     {
       validateStatus: () => true
     }

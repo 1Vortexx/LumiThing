@@ -1,0 +1,203 @@
+import React, { useContext, useEffect, useRef, useState } from 'react'
+import { MediaContext } from '@/contexts/MediaContext.tsx'
+import { RepeatMode } from '@/types/Playback.js'
+import VolumeOverlay from '@/components/VolumeOverlay/VolumeOverlay.tsx'
+import Visualizer from '@/components/Visualizer/Visualizer.tsx'
+import ScrollText from '@/components/ScrollText/ScrollText.tsx'
+import { BgStyle } from '@/components/Background/Background.tsx'
+import styles from './NowPlaying.module.css'
+
+function formatMs(ms: number) {
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
+  return `${m}:${(s % 60).toString().padStart(2, '0')}`
+}
+
+interface NowPlayingProps {
+  showVisualizer?: boolean
+  bgStyle?: BgStyle
+}
+
+const NowPlaying: React.FC<NowPlayingProps> = ({ bgStyle = 'full' }) => {
+  const { playerData, playerDataRef, actions } = useContext(MediaContext)
+
+  const [volume, setVolume] = useState(0)
+  const volumeRef = useRef(volume)
+  const lastVolumeChange = useRef(0)
+  const [volumeVisible, setVolumeVisible] = useState(false)
+  const volumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [volMaxed, setVolMaxed] = useState(false)
+  const volMaxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flashVolume = () => {
+    setVolumeVisible(true)
+    if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current)
+    volumeTimerRef.current = setTimeout(() => setVolumeVisible(false), 2000)
+  }
+
+  const flashMaxed = () => {
+    setVolMaxed(true)
+    if (volMaxTimerRef.current) clearTimeout(volMaxTimerRef.current)
+    volMaxTimerRef.current = setTimeout(() => setVolMaxed(false), 1600)
+  }
+
+  const cycleRepeat = () => {
+    if (!playerData) return
+    const map: Record<RepeatMode, RepeatMode> = { off: 'on', on: 'one', one: 'off' }
+    actions.repeat(map[playerData.repeat])
+  }
+
+  function volumeUp() {
+    if (playerDataRef.current === null) return
+    if (!playerDataRef.current.supportedActions.includes('volume')) return
+    if (volumeRef.current >= 100) { flashMaxed(); return }
+    const newVolume = Math.min(volumeRef.current + 10, 100)
+    actions.setVolume(newVolume)
+    setVolume(newVolume)
+    volumeRef.current = newVolume
+    lastVolumeChange.current = Date.now()
+    flashVolume()
+  }
+
+  function volumeDown() {
+    if (playerDataRef.current === null) return
+    if (!playerDataRef.current.supportedActions.includes('volume')) return
+    if (volumeRef.current <= 0) return
+    const newVolume = Math.max(volumeRef.current - 10, 0)
+    actions.setVolume(newVolume)
+    setVolume(newVolume)
+    volumeRef.current = newVolume
+    lastVolumeChange.current = Date.now()
+    flashVolume()
+  }
+
+  // Sync volume from server unless user changed it in the last second
+  useEffect(() => {
+    if (!playerData) return
+    if (lastVolumeChange.current < Date.now() - 1000) {
+      setVolume(playerData.volume)
+      volumeRef.current = playerData.volume
+    }
+  }, [playerData])
+
+  // Wheel listener — no dep array so closures stay fresh every render
+  useEffect(() => {
+    const listener = (e: globalThis.WheelEvent) => {
+      e.preventDefault()
+      if (e.deltaX < 0) volumeDown()
+      else if (e.deltaX > 0) volumeUp()
+    }
+    document.addEventListener('wheel', listener, { passive: false })
+    return () => document.removeEventListener('wheel', listener)
+  })
+
+  const isPlaying   = playerData?.isPlaying ?? false
+  const current     = playerData?.track.duration.current ?? 0
+  const total       = playerData?.track.duration.total ?? 0
+  const pct         = total > 0 ? Math.min(current / total, 1) * 100 : 0
+  const remaining   = Math.max(total - current, 0)
+  const canPrev    = playerData?.supportedActions.includes('previous') ?? false
+  const canNext    = playerData?.supportedActions.includes('next') ?? false
+  const canShuffle = playerData?.supportedActions.includes('shuffle') ?? false
+  const canRepeat  = playerData?.supportedActions.includes('repeat') ?? false
+
+  return (
+    <div className={styles.screen}>
+      <VolumeOverlay volume={volume} visible={volumeVisible} />
+      <div className={styles.maxToast} data-visible={volMaxed}>
+        <span className="material-icons">volume_up</span>
+        Volume is maxed
+      </div>
+
+      {/* ── Top: track info + visualizer ── */}
+      <div className={`${styles.top}${bgStyle === 'thumbnail' ? ` ${styles.topThumbnail}` : ''}`}>
+        <div className={styles.info}>
+          <ScrollText className={styles.source}>
+            {playerData?.track.album ?? 'LumiThing'}
+          </ScrollText>
+          <ScrollText className={styles.trackName}>
+            {playerData?.track.name ?? 'Nothing Playing'}
+          </ScrollText>
+          <ScrollText className={styles.artist}>
+            {playerData?.track.artists.join(', ') ?? '—'}
+          </ScrollText>
+        </div>
+      </div>
+
+      {/* ── Visualizer (below artist, above progress) ── */}
+      <div className={`${styles.visualizerRow}${bgStyle === 'thumbnail' ? ` ${styles.visualizerRowThumbnail}` : ''}`}>
+        <Visualizer isPlaying={isPlaying} />
+      </div>
+
+      {/* ── Progress bar ── */}
+      <div className={styles.progress}>
+        <span className={styles.progressTime}>{formatMs(current)}</span>
+        <div className={styles.progressTrack}>
+          <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+        </div>
+        <span className={styles.progressTime}>-{formatMs(remaining)}</span>
+      </div>
+
+      {/* ── Divider ── */}
+      <div className={styles.divider} />
+
+      {/* ── Controls row ── */}
+      <div className={styles.controls}>
+
+        <button
+          className={styles.btn}
+          data-active={playerData?.shuffle}
+          onClick={() => actions.shuffle(!playerData?.shuffle)}
+          disabled={!canShuffle}
+          aria-label="Shuffle"
+        >
+          <span className="material-icons">shuffle</span>
+        </button>
+
+        <button
+          className={styles.btn}
+          onClick={actions.skipBackward}
+          disabled={!canPrev}
+          aria-label="Previous"
+        >
+          <span className="material-icons">skip_previous</span>
+        </button>
+
+        <button
+          className={`${styles.btn} ${styles.playBtn}`}
+          onClick={actions.playPause}
+          disabled={!playerData}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+        >
+          <span className="material-icons">
+            {isPlaying ? 'pause' : 'play_arrow'}
+          </span>
+        </button>
+
+        <button
+          className={styles.btn}
+          onClick={actions.skipForward}
+          disabled={!canNext}
+          aria-label="Next"
+        >
+          <span className="material-icons">skip_next</span>
+        </button>
+
+        <button
+          className={styles.btn}
+          data-active={playerData?.repeat !== 'off'}
+          onClick={cycleRepeat}
+          disabled={!canRepeat}
+          aria-label="Repeat"
+        >
+          <span className="material-icons">
+            {playerData?.repeat === 'one' ? 'repeat_one' : 'repeat'}
+          </span>
+        </button>
+
+      </div>
+    </div>
+  )
+}
+
+export default NowPlaying
