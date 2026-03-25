@@ -26,15 +26,15 @@ export async function getWebAppDir() {
   const version = app.getVersion()
   const tempDir = app.getPath('temp')
 
-  const zipPath = path.join(tempDir, `glancething-client-v${version}.zip`)
-  const extractPath = path.join(tempDir, `glancething-client-v${version}`)
+  const zipPath = path.join(tempDir, `lumithing-client-v${version}.zip`)
+  const extractPath = path.join(tempDir, `lumithing-client-v${version}`)
 
   if (fs.existsSync(zipPath)) fs.rmSync(zipPath)
 
   if (fs.existsSync(extractPath))
     fs.rmSync(extractPath, { recursive: true })
 
-  const url = `https://github.com/BluDood/GlanceThing/releases/download/v${version}/glancething-client-v${version}.zip`
+  const url = `https://github.com/1Vortexx/LumiThing/releases/download/v${version}/lumithing-client-v${version}.zip`
 
   const res = await axios.get(url, {
     responseType: 'stream',
