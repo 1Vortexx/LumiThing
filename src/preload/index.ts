@@ -51,6 +51,7 @@ enum IPCHandler {
   CheckUpdate = 'checkUpdate',
   DownloadUpdate = 'downloadUpdate',
   QuitAndInstall = 'quitAndInstall',
+  OpenExternal = 'openExternal',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
@@ -134,6 +135,7 @@ const api = {
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
   downloadUpdate: () => ipcRenderer.invoke(IPCHandler.DownloadUpdate),
   quitAndInstall: () => ipcRenderer.invoke(IPCHandler.QuitAndInstall),
+  openExternal: (url: string) => ipcRenderer.invoke(IPCHandler.OpenExternal, url),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
   isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
   saveShortcutIconFromDataUrl: (id: string, dataUrl: string) =>

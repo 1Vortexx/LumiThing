@@ -83,6 +83,25 @@ import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import { autoUpdater } from 'electron-updater'
 
+const sendUpdateLog = (msg: string) => mainWindow?.webContents.send('updateLog', `[${new Date().toISOString()}] ${msg}`)
+
+if (app.isPackaged) {
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.on('checking-for-update', () => sendUpdateLog('Checking for update...'))
+  autoUpdater.on('update-available', info => sendUpdateLog(`Update available: ${info.version}`))
+  autoUpdater.on('update-not-available', info => sendUpdateLog(`No update available. Current: ${info.version}`))
+  autoUpdater.on('update-downloaded', info => {
+    sendUpdateLog(`Download complete: ${info.version}`)
+    mainWindow?.webContents.send('updateDownloaded')
+  })
+  autoUpdater.on('download-progress', p => {
+    sendUpdateLog(`Downloading... ${Math.round(p.percent)}% (${Math.round(p.transferred / 1024)}KB / ${Math.round(p.total / 1024)}KB)`)
+    mainWindow?.webContents.send('updateProgress', Math.round(p.percent))
+  })
+  autoUpdater.on('error', err => sendUpdateLog(`Error: ${err?.message ?? String(err)}`))
+}
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
@@ -145,15 +164,6 @@ app.on('second-instance', () => {
   }
 })
 
-autoUpdater.autoDownload = false
-autoUpdater.autoInstallOnAppQuit = false
-autoUpdater.on('update-downloaded', () => {
-  mainWindow?.webContents.send('updateDownloaded')
-})
-autoUpdater.on('download-progress', progress => {
-  mainWindow?.webContents.send('updateProgress', Math.round(progress.percent))
-})
-autoUpdater.on('error', () => {})
 
 app.on('ready', async () => {
   log('Welcome!', 'LumiThing')
@@ -265,6 +275,7 @@ enum IPCHandler {
   CheckUpdate = 'checkUpdate',
   DownloadUpdate = 'downloadUpdate',
   QuitAndInstall = 'quitAndInstall',
+  OpenExternal = 'openExternal',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
@@ -281,8 +292,8 @@ async function setupIpcHandlers() {
     const found = await findCarThing()
     if (!found) return 'not_found'
 
-    const installed = await checkInstalledApp(found)
-    if (!installed) return 'not_installed'
+    const lastVersion = getStorageValue('lastInstalledClientVersion')
+    if (lastVersion !== app.getVersion()) return 'not_installed'
 
     return 'ready'
   })
@@ -296,9 +307,11 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.InstallApp, async () => {
+    lastInstallTime = Date.now()
     const res = await installApp(null).catch(err => ({ err }))
     if (res && typeof res === 'object' && 'err' in res)
       return res.err.message
+    setStorageValue('lastInstalledClientVersion', app.getVersion())
     return true
   })
 
@@ -330,6 +343,8 @@ async function setupIpcHandlers() {
     return setStorageValue(key, value)
   })
 
+  let lastInstallTime = 0
+
   async function carThingStateUpdate() {
     const found = await findCarThing().catch(err => {
       log(
@@ -341,9 +356,10 @@ async function setupIpcHandlers() {
     })
 
     if (found) {
-      const installed = await checkInstalledApp(found)
+      const lastVersion = getStorageValue('lastInstalledClientVersion')
+      const upToDate = lastVersion === app.getVersion()
 
-      if (installed) {
+      if (upToDate) {
         mainWindow?.webContents.send('carThingState', 'ready')
         await forwardSocketServer(found)
 
@@ -358,9 +374,12 @@ async function setupIpcHandlers() {
         }
       } else {
         const willAutoInstall = getStorageValue('installAutomatically')
-        if (willAutoInstall) {
+        const cooldownElapsed = Date.now() - lastInstallTime > 60000
+        if (willAutoInstall && cooldownElapsed) {
+          lastInstallTime = Date.now()
           mainWindow?.webContents.send('carThingState', 'installing')
           await installApp(found)
+          setStorageValue('lastInstalledClientVersion', app.getVersion())
         } else {
           mainWindow?.webContents.send('carThingState', 'not_installed')
         }
@@ -542,11 +561,18 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.DownloadUpdate, async () => {
-    await autoUpdater.downloadUpdate().catch(() => null)
+    if (app.isPackaged) {
+      await autoUpdater.checkForUpdates().catch(() => null)
+      await autoUpdater.downloadUpdate().catch(() => null)
+    }
   })
 
   ipcMain.handle(IPCHandler.QuitAndInstall, () => {
-    autoUpdater.quitAndInstall()
+    if (app.isPackaged) autoUpdater.quitAndInstall()
+  })
+
+  ipcMain.handle(IPCHandler.OpenExternal, (_event, url: string) => {
+    shell.openExternal(url)
   })
 
   ipcMain.handle(IPCHandler.FindOpenPort, async () => {

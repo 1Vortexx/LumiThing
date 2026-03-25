@@ -29,6 +29,10 @@ const Home: React.FC = () => {
   const [updateInfo, setUpdateInfo] = useState<{ currentVersion: string; latestVersion: string; downloadUrl: string } | null>(null)
   const [updateState, setUpdateState] = useState<'idle' | 'downloading' | 'ready'>('idle')
   const [updateProgress, setUpdateProgress] = useState(0)
+  const [updateLogs, setUpdateLogs] = useState<string[]>([])
+  const [showUpdateLog, setShowUpdateLog] = useState(false)
+  const [carThingNeedsUpdate, setCarThingNeedsUpdate] = useState(false)
+  const [installingToCarThing, setInstallingToCarThing] = useState(false)
 
   useEffect(() => {
     window.api.getStorageValue('setupComplete').then(setupComplete => {
@@ -53,11 +57,18 @@ const Home: React.FC = () => {
     window.api.checkUpdate().then(setUpdateInfo)
     const checkUpdateInterval = setInterval(() => window.api.checkUpdate().then(setUpdateInfo), 1000 * 60 * 30)
 
-    const removeProgressListener = window.api.on('updateProgress', (pct: unknown) => {
-      setUpdateProgress(pct as number)
+    Promise.all([
+      window.api.getVersion(),
+      window.api.getStorageValue('lastInstalledClientVersion')
+    ]).then(([current, last]) => {
+      setCarThingNeedsUpdate(!!last && last !== current)
     })
-    const removeDownloadedListener = window.api.on('updateDownloaded', () => {
-      setUpdateState('ready')
+
+    const removeProgressListener = window.api.on('updateProgress', (pct: unknown) => setUpdateProgress(pct as number))
+    const removeDownloadedListener = window.api.on('updateDownloaded', () => setUpdateState('ready'))
+    const removeLogListener = window.api.on('updateLog', (msg: unknown) => {
+      setUpdateLogs(prev => [...prev, msg as string])
+      setShowUpdateLog(true)
     })
 
     return () => {
@@ -66,6 +77,7 @@ const Home: React.FC = () => {
       clearInterval(checkUpdateInterval)
       removeProgressListener()
       removeDownloadedListener()
+      removeLogListener()
     }
   }, [])
 
@@ -132,28 +144,60 @@ const Home: React.FC = () => {
         </div>
       )}
 
-      {updateInfo && updateInfo.latestVersion !== updateInfo.currentVersion && (
+      {carThingNeedsUpdate && (carThingState === CarThingState.Ready || carThingState === CarThingState.NotInstalled) && (
         <div className={styles.notice} data-type="update">
-          <span className="material-icons">
-            {updateState === 'ready' ? 'check_circle' : 'download'}
-          </span>
+          <span className="material-icons">phonelink_setup</span>
           <div className={styles.noticeText}>
-            <p className={styles.noticeTitle}>
-              {updateState === 'idle' && 'Update Available'}
-              {updateState === 'downloading' && `Downloading... ${updateProgress}%`}
-              {updateState === 'ready' && 'Ready to Install'}
-            </p>
-            <p className={styles.noticeDesc}>{updateInfo.currentVersion} → {updateInfo.latestVersion}</p>
+            <p className={styles.noticeTitle}>CarThing Needs Update</p>
+            <p className={styles.noticeDesc}>You have the latest LumiThing app, but your CarThing hasn't been updated yet.</p>
           </div>
-          {updateState === 'idle' && (
-            <button className={styles.noticeBtn} onClick={() => { setUpdateState('downloading'); window.api.downloadUpdate() }}>
-              Download
-            </button>
-          )}
-          {updateState === 'ready' && (
-            <button className={styles.noticeBtn} onClick={() => window.api.quitAndInstall()}>
-              Install
-            </button>
+          <button
+            className={styles.noticeBtn}
+            disabled={installingToCarThing}
+            onClick={async () => {
+              setInstallingToCarThing(true)
+              await window.api.installApp()
+              setCarThingNeedsUpdate(false)
+              setInstallingToCarThing(false)
+            }}
+          >
+            {installingToCarThing ? 'Updating...' : 'Update CarThing'}
+          </button>
+        </div>
+      )}
+
+      {updateInfo && updateInfo.latestVersion !== updateInfo.currentVersion && (
+        <div className={styles.updateCard}>
+          <div className={styles.notice} data-type="update">
+            <span className="material-icons">{updateState === 'ready' ? 'check_circle' : 'download'}</span>
+            <div className={styles.noticeText}>
+              <p className={styles.noticeTitle}>
+                {updateState === 'idle' && 'Update Available'}
+                {updateState === 'downloading' && `Downloading... ${updateProgress}%`}
+                {updateState === 'ready' && 'Ready to Install'}
+              </p>
+              <p className={styles.noticeDesc}>{updateInfo.currentVersion} → {updateInfo.latestVersion}</p>
+            </div>
+            {updateState === 'idle' && (
+              <button className={styles.noticeBtn} onClick={() => { setUpdateState('downloading'); setUpdateLogs([]); window.api.downloadUpdate() }}>
+                Download
+              </button>
+            )}
+            {updateState === 'ready' && (
+              <button className={styles.noticeBtn} onClick={() => window.api.quitAndInstall()}>
+                Install
+              </button>
+            )}
+            {updateLogs.length > 0 && (
+              <button className={styles.noticeBtn} onClick={() => setShowUpdateLog(s => !s)}>
+                <span className="material-icons" style={{ fontSize: 16 }}>{showUpdateLog ? 'expand_less' : 'expand_more'}</span>
+              </button>
+            )}
+          </div>
+          {showUpdateLog && updateLogs.length > 0 && (
+            <div className={styles.updateLog}>
+              {updateLogs.map((line, i) => <p key={i}>{line}</p>)}
+            </div>
           )}
         </div>
       )}
