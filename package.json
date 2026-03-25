@@ -1,9 +1,9 @@
 {
   "name": "lumithing",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop application for LumiThing",
   "main": "./out/main/index.js",
-  "author": "BluDood",
+  "author": "1Vortexx",
   "homepage": "https://github.com/BluDood/GlanceThing",
   "scripts": {
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
