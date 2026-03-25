@@ -357,9 +357,21 @@ async function setupIpcHandlers() {
 
     if (found) {
       const lastVersion = getStorageValue('lastInstalledClientVersion')
-      const upToDate = lastVersion === app.getVersion()
 
-      if (upToDate) {
+      if (!lastVersion) {
+        // Never been installed — auto-install once
+        const willAutoInstall = getStorageValue('installAutomatically')
+        const cooldownElapsed = Date.now() - lastInstallTime > 60000
+        if (willAutoInstall && cooldownElapsed) {
+          lastInstallTime = Date.now()
+          mainWindow?.webContents.send('carThingState', 'installing')
+          await installApp(found)
+          setStorageValue('lastInstalledClientVersion', app.getVersion())
+        } else {
+          mainWindow?.webContents.send('carThingState', 'not_installed')
+        }
+      } else {
+        // Already installed — always mark ready, let UI handle version mismatch
         mainWindow?.webContents.send('carThingState', 'ready')
         await forwardSocketServer(found)
 
@@ -371,17 +383,6 @@ async function setupIpcHandlers() {
           const brightness = getStorageValue('brightness') ?? 0.5
           if ((await getBrightness(found)) !== brightness)
             setBrightnessSmooth(found, brightness)
-        }
-      } else {
-        const willAutoInstall = getStorageValue('installAutomatically')
-        const cooldownElapsed = Date.now() - lastInstallTime > 60000
-        if (willAutoInstall && cooldownElapsed) {
-          lastInstallTime = Date.now()
-          mainWindow?.webContents.send('carThingState', 'installing')
-          await installApp(found)
-          setStorageValue('lastInstalledClientVersion', app.getVersion())
-        } else {
-          mainWindow?.webContents.send('carThingState', 'not_installed')
         }
       }
     } else {
