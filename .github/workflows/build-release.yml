@@ -149,7 +149,7 @@ jobs:
         run: npm run build
 
       - name: Zip the build output
-        run: zip -r /tmp/lumithing-client-${{ github.ref_name }}.zip ./*
+        run: zip -r /tmp/lumithing-client-${{ inputs.tag || github.ref_name }}.zip ./*
         working-directory: ./client/dist
 
       - name: Upload artifact
