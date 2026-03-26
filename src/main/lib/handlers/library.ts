@@ -183,13 +183,29 @@ export const actions: HandlerAction[] = [
       const { url } = data as { url: string }
       if (!url) return
       try {
-        const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 })
+        const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 })
+        if (res.status !== 200) return send(ws, 'image', { url, base64: null })
         const contentType = (res.headers['content-type'] as string) ?? 'image/jpeg'
         const base64 = `data:${contentType};base64,${Buffer.from(res.data).toString('base64')}`
         send(ws, 'image', { url, base64 })
       } catch {
         send(ws, 'image', { url, base64: null })
       }
+    }
+  },
+  {
+    action: 'play',
+    handle: async (ws, data) => {
+      const { uri, contextUri } = data as { uri?: string; contextUri?: string }
+      if (!active()) return
+      try {
+        let body: object
+        if (contextUri && uri) body = { context_uri: contextUri, offset: { uri } }
+        else if (contextUri)   body = { context_uri: contextUri }
+        else if (uri)          body = { uris: [uri] }
+        else return
+        await spotify.instance!.put('/me/player/play', body)
+      } catch {}
     }
   },
   {

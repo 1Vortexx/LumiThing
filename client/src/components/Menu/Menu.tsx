@@ -17,7 +17,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
   const [shown, setShown] = useState(false)
   const shownRef = useRef(shown)
 
-  const [selected, setSelected] = useState(1)
+  const [selected, setSelected] = useState(0)
   const [restoring, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const lastMenuPressRef = useRef<number>(0)
@@ -30,15 +30,6 @@ const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
       onClick: () => {
         setShown(false)
         onNavigate('settings')
-      }
-    },
-    {
-      name: 'Library',
-      icon: 'library_music',
-      color: '#1db954',
-      onClick: () => {
-        setShown(false)
-        onNavigate('library')
       }
     },
     {
@@ -67,21 +58,6 @@ const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
           })
         )
         setShown(false)
-      }
-    },
-    {
-      name: 'Reboot',
-      icon: 'restart_alt',
-      color: '#1565c0',
-      onClick: () => {
-        setLoading(true)
-        setMessage('Rebooting...')
-        setShown(false)
-        socket?.send(
-          JSON.stringify({
-            type: 'reboot'
-          })
-        )
       }
     },
     {
@@ -117,7 +93,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
         ;(document.activeElement as HTMLElement)?.blur()
         setTimeout(() => {
           if (!shownRef.current) {
-            setSelected(1)
+            setSelected(0)
           }
         }, 200)
       } else if (e.key === 'ArrowLeft' && shownRef.current) {

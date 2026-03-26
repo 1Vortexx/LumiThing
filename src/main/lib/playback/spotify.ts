@@ -259,6 +259,7 @@ export function filterData(
       shuffle: shuffle_state,
       volume: device.volume_percent,
       track: {
+        id: null,
         album: item.show.name,
         artists: [item.show.publisher],
         duration: {
@@ -281,6 +282,7 @@ export function filterData(
       shuffle: shuffle_state,
       volume: device.volume_percent,
       track: {
+        id: item.id ?? null,
         album: item.album.name,
         artists: item.artists.map(a => a.name),
         duration: {

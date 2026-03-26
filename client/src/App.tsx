@@ -39,7 +39,7 @@ const App: React.FC = () => {
   const [buttonShortcuts, setButtonShortcuts] = useState<ButtonShortcuts>({ '1': null, '2': null, '3': null, '4': null })
   const [serverTime, setServerTime] = useState<{ time: string; date: string } | null>(null)
   const [bgStyle, setBgStyle] = useState<BgStyle>('full')
-  const [weather, setWeather] = useState<{ temp: number; unit: 'F' | 'C'; icon: string; condition: string } | null>(null)
+  const [weather, setWeather] = useState<{ temp: number; unit: 'F' | 'C'; icon: string; condition: string; city: string } | null>(null)
   const buttonShortcutsRef = useRef(buttonShortcuts)
   buttonShortcutsRef.current = buttonShortcuts
 
@@ -123,8 +123,7 @@ const App: React.FC = () => {
         case 'Enter':
         case ' ':
           e.preventDefault()
-          if (activeTabRef.current === 'home') navigate('nowplaying')
-          else actionsRef.current.playPause()
+          actionsRef.current.playPause()
           break
         case 'ArrowRight':
           e.preventDefault(); actionsRef.current.skipForward(); break
@@ -138,7 +137,8 @@ const App: React.FC = () => {
             navigate('library')
           } else {
             lastEscapeRef.current = now
-            navigate('home')
+            if (activeTabRef.current === 'home') navigate('nowplaying')
+            else navigate('home')
           }
           break
         }
@@ -168,7 +168,7 @@ const App: React.FC = () => {
         <TopBar clockFormat="12h" serverTime={serverTime} mediaPlayerActive={activeTab === 'nowplaying'} weather={weather} />
 
         <main className={styles.content}>
-          {activeTab === 'home'       && <HomeView onNavigate={navigate} />}
+          {activeTab === 'home'       && <HomeView onNavigate={navigate} weather={weather} serverTime={serverTime} clockFormat="12h" />}
           {activeTab === 'nowplaying' && <NowPlaying showVisualizer={settings.visualizer} bgStyle={bgStyle} />}
           {activeTab === 'library'    && <LibraryView />}
           {activeTab === 'settings'   && <SettingsView onChange={setSettings} />}

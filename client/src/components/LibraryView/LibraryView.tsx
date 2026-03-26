@@ -23,18 +23,25 @@ const HOME_SECTIONS: { section: Section; label: string; icon: string }[] = [
 ]
 
 const SwipeRow: React.FC<{
+  onClick: () => void
   onSwipeLeft: () => void
   queued: boolean
   children: React.ReactNode
-}> = ({ onSwipeLeft, queued, children }) => {
+}> = ({ onClick, onSwipeLeft, queued, children }) => {
   const startX = useRef(0)
+  const swiped = useRef(false)
   return (
     <div
       className={`${styles.row} ${queued ? styles.rowQueued : ''}`}
-      onTouchStart={e => { startX.current = e.touches[0].clientX }}
+      onTouchStart={e => { startX.current = e.touches[0].clientX; swiped.current = false }}
       onTouchEnd={e => {
-        if (startX.current - e.changedTouches[0].clientX > 60) onSwipeLeft()
+        if (startX.current - e.changedTouches[0].clientX > 60) {
+          swiped.current = true
+          onSwipeLeft()
+        }
       }}
+      onMouseDown={() => { swiped.current = false }}
+      onClick={() => { if (!swiped.current) onClick() }}
     >
       {children}
       {queued && <span className={styles.queuedLabel}>Queued</span>}
@@ -60,15 +67,19 @@ const LibraryView: React.FC = () => {
 
   const timerRef        = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestedImages = useRef(new Set<string>())
+  const screenRef       = useRef(screen)
+  screenRef.current = screen
 
   function send(action: string, data?: unknown) {
     socket?.send(JSON.stringify({ type: 'library', action, data }))
   }
 
-  function requestImage(url: string | null | undefined) {
-    if (!url || imageCache[url] || requestedImages.current.has(url)) return
-    requestedImages.current.add(url)
-    send('image', { url })
+  function requestImages(urls: (string | null | undefined)[]) {
+    const toFetch = urls.filter(url => url && !requestedImages.current.has(url)) as string[]
+    toFetch.forEach((url, i) => {
+      requestedImages.current.add(url)
+      setTimeout(() => send('image', { url }), i * 80)
+    })
   }
 
   useEffect(() => {
@@ -106,12 +117,10 @@ const LibraryView: React.FC = () => {
     return () => socket.removeEventListener('message', listener)
   }, [socket])
 
-  // Request images when lists load
-  useEffect(() => { playlists.forEach(p => requestImage(p.image)) }, [playlists])
-  useEffect(() => { albums.forEach(a => requestImage(a.image)) }, [albums])
-  useEffect(() => { artistList.forEach(a => requestImage(a.image)) }, [artistList])
+  useEffect(() => { requestImages(playlists.map(p => p.image)) }, [playlists])
+  useEffect(() => { requestImages(albums.map(a => a.image)) }, [albums])
+  useEffect(() => { requestImages(artistList.map(a => a.image)) }, [artistList])
 
-  // Check liked status for track lists
   useEffect(() => {
     if (tracks.length > 0 && !loading) send('check-liked', { ids: tracks.map(t => t.id) })
   }, [tracks, loading])
@@ -136,6 +145,16 @@ const LibraryView: React.FC = () => {
     setTracks([])
     setScreen({ type: 'tracks', id, kind, title })
     send('tracks', { id, type: kind })
+  }
+
+  function playTrack(uri: string) {
+    const s = screenRef.current
+    const contextUri = s.type === 'tracks'
+      ? s.kind === 'playlist' ? `spotify:playlist:${s.id}`
+      : s.kind === 'album'    ? `spotify:album:${s.id}`
+      : undefined
+      : undefined
+    send('play', { uri, contextUri })
   }
 
   function queueTrack(uri: string, id: string) {
@@ -175,7 +194,7 @@ const LibraryView: React.FC = () => {
 
   function TrackRow({ t }: { t: TrackItem }) {
     return (
-      <SwipeRow onSwipeLeft={() => queueTrack(t.uri, t.id)} queued={queuedId === t.id}>
+      <SwipeRow onClick={() => playTrack(t.uri)} onSwipeLeft={() => queueTrack(t.uri, t.id)} queued={queuedId === t.id}>
         <div className={styles.thumb}><span className="material-icons">music_note</span></div>
         <div className={styles.info}>
           <p className={styles.name}>{t.name}</p>
@@ -190,6 +209,11 @@ const LibraryView: React.FC = () => {
     )
   }
 
+  const titleMap: Record<Section, string> = {
+    playlists: 'Playlists', albums: 'Albums', liked: 'Liked Songs',
+    recent: 'Recently Played', top: 'Top Tracks', artists: 'Artists',
+  }
+
   if (screen.type === 'home') {
     return (
       <div className={styles.view}>
@@ -199,17 +223,11 @@ const LibraryView: React.FC = () => {
             <button key={section} className={styles.homeBtn} onClick={() => openSection(section)}>
               <span className="material-icons">{icon}</span>
               <span>{label}</span>
-              <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
             </button>
           ))}
         </div>
       </div>
     )
-  }
-
-  const titleMap: Record<Section, string> = {
-    playlists: 'Playlists', albums: 'Albums', liked: 'Liked Songs',
-    recent: 'Recently Played', top: 'Top Tracks', artists: 'Artists',
   }
 
   if (screen.type === 'list') {
@@ -251,8 +269,8 @@ const LibraryView: React.FC = () => {
               </div>
               <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
             </button>
-          )) : section === 'liked' ? liked.map(t => <TrackRow key={t.id} t={t} />)
-            : section === 'recent' ? recentTracks.map(t => <TrackRow key={t.id} t={t} />)
+          )) : section === 'liked'   ? liked.map(t => <TrackRow key={t.id} t={t} />)
+            : section === 'recent'   ? recentTracks.map(t => <TrackRow key={t.id} t={t} />)
             : topTracks.map(t => <TrackRow key={t.id} t={t} />)
           }
         </div>
@@ -261,6 +279,9 @@ const LibraryView: React.FC = () => {
   }
 
   if (screen.type === 'tracks') {
+    const contextUri = screen.kind === 'playlist' ? `spotify:playlist:${screen.id}`
+                     : screen.kind === 'album'    ? `spotify:album:${screen.id}`
+                     : `spotify:artist:${screen.id}`
     return (
       <div className={styles.view}>
         <div className={styles.header}>
@@ -268,6 +289,9 @@ const LibraryView: React.FC = () => {
             <span className="material-icons">arrow_back_ios</span>
           </button>
           <p className={`${styles.heading} ${styles.headingTrunc}`}>{screen.title}</p>
+          <button className={styles.playAllBtn} onClick={() => send('play', { contextUri })}>
+            <span className="material-icons">play_arrow</span>
+          </button>
         </div>
         <div className={styles.list}>
           {loading

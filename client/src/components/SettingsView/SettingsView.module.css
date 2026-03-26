@@ -114,6 +114,27 @@
   transform: translateX(24px);
 }
 
+/* ── About ───────────────────────────────── */
+.aboutRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.aboutKey {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.aboutVal {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 /* ── Credits ─────────────────────────────── */
 .divider {
   height: 1px;
