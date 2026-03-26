@@ -2,7 +2,7 @@ name: Build LumiThing Release
 
 on:
   release:
-    types: [created]
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
           path: ./dist/lumithing-*-setup.exe
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/lumithing-*-setup.exe
@@ -76,7 +76,7 @@ jobs:
           path: ./dist/lumithing-*.dmg
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/lumithing-*.dmg
@@ -112,7 +112,7 @@ jobs:
           path: ./dist/lumithing-*.AppImage
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/lumithing-*.AppImage
@@ -149,7 +149,7 @@ jobs:
           path: ./client/dist
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
           files: /tmp/lumithing-client-*.zip
