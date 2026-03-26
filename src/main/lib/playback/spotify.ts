@@ -334,8 +334,9 @@ class SpotifyHandler extends BasePlaybackHandler {
     })
 
     this.instance.interceptors.request.use(config => {
-      if (this.accessToken) {
-        config.headers.Authorization = `Bearer ${this.accessToken}`
+      const token = this.accessToken ?? this.webToken
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
       }
 
       return config
