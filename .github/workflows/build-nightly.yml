@@ -29,6 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: ./client
+
       - name: Build the project
         run: npm run build:win:nightly
 
@@ -53,6 +57,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: ./client
+
       - name: Build the project
         run: npm run build:mac:nightly
 
@@ -76,6 +84,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: ./client
 
       - name: Build the project
         run: npm run build:linux:nightly
