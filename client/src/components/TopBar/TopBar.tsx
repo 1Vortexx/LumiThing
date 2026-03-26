@@ -59,7 +59,7 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerAct
           <span className={styles.weatherTemp}>{weather.temp}°{weather.unit}</span>
         </div>
       )}
-      <span className={styles.build}>LumiThing Astra 1.1.3</span>
+      <span className={styles.build}>LumiThing Astra 1.1.4</span>
     </div>
   )
 }
