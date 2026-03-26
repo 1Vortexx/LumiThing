@@ -3,183 +3,319 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: 6px 8px 8px;
+  gap: 6px;
 }
 
-/* ── Top: Now Playing card (70%) ─────────── */
-.playerCard {
-  flex: 7;
-  min-height: 0;
-  cursor: pointer;
-  position: relative;
-  background-color: rgba(20, 15, 30, 0.85);
-  background-size: cover;
-  background-position: center;
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.playerCard:active {
-  opacity: 0.85;
-}
-
-.playerOverlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.92) 0%,
-    rgba(0, 0, 0, 0.55) 35%,
-    rgba(0, 0, 0, 0.1)  70%,
-    rgba(0, 0, 0, 0)    100%
-  );
-}
-
-/* Playing / paused badge top-left */
-.playingBadge {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 80, 80, 0.4);
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #ff6b6b;
-  text-transform: uppercase;
-}
-
-.playingBadge[data-playing='true'] {
-  color: #4cde80;
-  border-color: rgba(76, 222, 128, 0.4);
-  background: rgba(76, 222, 128, 0.08);
-}
-
-.playerInfo {
-  position: relative;
-  z-index: 2;
-  padding: 0 18px 16px;
+/* ── Banner ─────────────────────────────────── */
+.banner {
+  flex-shrink: 0;
+  height: 96px;
   display: flex;
   flex-direction: row;
-  align-items: flex-end;
-  gap: 14px;
+  align-items: center;
+  gap: 20px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
 }
 
-.playerText {
+.banner:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.artThumb {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.artThumb .material-icons {
+  font-size: 22px;
+}
+
+.artImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bannerInfo {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
 }
 
-.visualizerWrap {
-  flex-shrink: 0;
-  height: 36px;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 2px;
-}
-
-.playerName {
-  font-size: 28px;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+.bannerName {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
   overflow: hidden;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
 }
 
-.playerArtist {
-  font-size: 15px;
+.bannerArtist {
+  font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.bannerTime {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.02em;
+  align-self: center;
 }
 
 .emptyLabel {
-  font-size: 20px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.25);
   font-style: italic;
-  letter-spacing: -0.01em;
+  margin: 0;
 }
 
-/* ── Divider ─────────────────────────────── */
-.divider {
+
+/* ── Tab bar ─────────────────────────────────── */
+.tabBar {
   flex-shrink: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* ── Bottom: shortcuts strip (30%) ────────── */
-.shortcuts {
-  flex: 3;
-  min-height: 0;
   display: flex;
   flex-direction: row;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0 24px;
+  gap: 4px;
 }
 
-.shortcut {
+.tabBtn {
   flex: 1;
-  background: none;
-  border: none;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tabBtn[data-active='true'] {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* ── Scrollable section viewport ─────────────── */
+.sectionViewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sectionTrack {
+  display: flex;
+  flex-direction: row;
+  width: 400%;
+  height: 100%;
+  transition: transform 0.28s ease;
+}
+
+.section {
+  width: 25%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 2×2 grid (Shortcuts + Library) ─────────── */
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 7px;
+}
+
+.gridBtn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.9);
+  gap: 12px;
+  padding: 8px;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.12s ease, transform 0.1s ease;
-  padding: 8px 4px;
+  transition: background 0.12s ease, transform 0.1s ease;
 }
 
-.shortcut:active {
-  opacity: 0.6;
-  transform: scale(0.9);
+.gridBtn:active {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(0.97);
 }
 
-.shortcut .material-icons {
-  font-size: 32px;
-  color: rgba(255, 255, 255, 0.65);
+.gridIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.shortcutIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+.gridIcon .material-icons {
+  font-size: 22px;
+}
+
+.gridImg {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-.shortcutLabel {
-  font-size: 11px;
+.gridLabel {
+  font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  width: 100%;
+  color: rgba(255, 255, 255, 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
+  width: 100%;
+  padding: 0 4px;
 }
 
-.shortcutEmpty {
+.gridEmpty {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+}
+
+/* ── Weather ─────────────────────────────────── */
+.weatherCard {
   flex: 1;
-  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+
+.weatherIcon {
+  font-size: 52px !important;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.weatherTemp {
+  font-size: 54px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.weatherCondition {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: capitalize;
+}
+
+.weatherCity {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Clock ───────────────────────────────────── */
+.clockCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+
+.clockTime {
+  font-size: 40px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.clockAmpm {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.04em;
+}
+
+.clockDate {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.01em;
+}
+
+/* ── Placeholder (no data) ───────────────────── */
+.placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.placeholder .material-icons {
+  font-size: 32px;
+}
+
+.placeholder p {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
 }

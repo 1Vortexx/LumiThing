@@ -86,6 +86,32 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onChange }) => {
         </div>
       </div>
 
+      {/* About */}
+      <div className={styles.group}>
+        <p className={styles.groupLabel}>About</p>
+
+        <div className={styles.aboutRow}>
+          <span className={styles.aboutKey}>App</span>
+          <span className={styles.aboutVal}>LumiThing Astra</span>
+        </div>
+        <div className={styles.aboutRow}>
+          <span className={styles.aboutKey}>Release</span>
+          <span className={styles.aboutVal}>Beta 1</span>
+        </div>
+        <div className={styles.aboutRow}>
+          <span className={styles.aboutKey}>Version</span>
+          <span className={styles.aboutVal}>1.2.5</span>
+        </div>
+        <div className={styles.aboutRow}>
+          <span className={styles.aboutKey}>Build</span>
+          <span className={styles.aboutVal}>1.2.5.3461</span>
+        </div>
+        <div className={styles.aboutRow}>
+          <span className={styles.aboutKey}>Platform</span>
+          <span className={styles.aboutVal}>Android ADB</span>
+        </div>
+      </div>
+
       {/* Credits */}
       <div className={styles.group}>
         <p className={styles.groupLabel}>Credits</p>

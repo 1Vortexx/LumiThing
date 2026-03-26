@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { MediaContext } from '@/contexts/MediaContext.tsx'
+import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { RepeatMode } from '@/types/Playback.js'
 import VolumeOverlay from '@/components/VolumeOverlay/VolumeOverlay.tsx'
 import Visualizer from '@/components/Visualizer/Visualizer.tsx'
@@ -20,6 +21,10 @@ interface NowPlayingProps {
 
 const NowPlaying: React.FC<NowPlayingProps> = ({ bgStyle = 'full' }) => {
   const { playerData, playerDataRef, actions } = useContext(MediaContext)
+  const { socket } = useContext(SocketContext)
+
+  const [liked, setLiked] = useState(false)
+  const [likedTrackId, setLikedTrackId] = useState<string | null>(null)
 
   const [volume, setVolume] = useState(0)
   const volumeRef = useRef(volume)
@@ -69,6 +74,43 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ bgStyle = 'full' }) => {
     volumeRef.current = newVolume
     lastVolumeChange.current = Date.now()
     flashVolume()
+  }
+
+  // Check liked status when track changes
+  useEffect(() => {
+    const id = playerData?.track.id ?? null
+    if (!id || !socket) return
+    if (id === likedTrackId) return
+    setLikedTrackId(id)
+    setLiked(false)
+    socket.send(JSON.stringify({ type: 'library', action: 'check-liked', data: { ids: [id] } }))
+  }, [playerData?.track.id, socket])
+
+  // Listen for liked status and like_result
+  useEffect(() => {
+    if (!socket) return
+    const listener = (e: MessageEvent) => {
+      const msg = JSON.parse(e.data)
+      if (msg.type !== 'library') return
+      if (msg.action === 'liked-status') {
+        const { ids, status } = msg.data ?? {}
+        if (Array.isArray(ids) && Array.isArray(status) && ids[0] === playerData?.track.id) {
+          setLiked(status[0] ?? false)
+        }
+      } else if (msg.action === 'like_result') {
+        if (msg.data?.id === playerData?.track.id) setLiked(msg.data.state)
+      }
+    }
+    socket.addEventListener('message', listener)
+    return () => socket.removeEventListener('message', listener)
+  }, [socket, playerData?.track.id])
+
+  function toggleLike() {
+    const id = playerData?.track.id
+    if (!id || !socket) return
+    const newState = !liked
+    setLiked(newState)
+    socket.send(JSON.stringify({ type: 'library', action: 'like', data: { id, state: newState } }))
   }
 
   // Sync volume from server unless user changed it in the last second
@@ -192,6 +234,18 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ bgStyle = 'full' }) => {
         >
           <span className="material-icons">
             {playerData?.repeat === 'one' ? 'repeat_one' : 'repeat'}
+          </span>
+        </button>
+
+        <button
+          className={`${styles.btn} ${styles.likeBtn}`}
+          data-active={liked}
+          onClick={toggleLike}
+          disabled={!playerData?.track.id}
+          aria-label="Like"
+        >
+          <span className="material-icons">
+            {liked ? 'favorite' : 'favorite_border'}
           </span>
         </button>
 

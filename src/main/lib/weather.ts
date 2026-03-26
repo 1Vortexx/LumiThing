@@ -9,6 +9,7 @@ export interface WeatherData {
   unit: 'F' | 'C'
   icon: string
   condition: string
+  city: string
 }
 
 const WMO_MAP: Record<number, { icon: string; condition: string }> = {
@@ -95,7 +96,8 @@ export async function fetchAndBroadcastWeather(): Promise<{ success: boolean; me
       temp: Math.round(current.temperature_2m),
       unit: unit === 'fahrenheit' ? 'F' : 'C',
       icon: mapped.icon,
-      condition: mapped.condition
+      condition: mapped.condition,
+      city,
     }
 
     log(`${cachedWeather.temp}°${cachedWeather.unit} — ${cachedWeather.condition}`, 'Weather')

@@ -16,6 +16,7 @@ export interface PlaybackData {
   shuffle: boolean
   repeat: RepeatMode
   track: {
+    id: string | null
     name: string
     artists: string[]
     album: string

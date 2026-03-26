@@ -209,3 +209,9 @@
   transform: scale(0.9);
   box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.3);
 }
+
+.btn[data-active='true'].likeBtn {
+  background: rgba(29, 185, 84, 0.2);
+  border-color: #1db954;
+  color: #1db954;
+}

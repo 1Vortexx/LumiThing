@@ -47,19 +47,41 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerAct
   const displayTime = serverTime?.time ?? formatClock(now, clockFormat)
   const displayDate = serverTime?.date ?? formatDate(now)
 
-  return (
-    <div className={styles.bar} data-media-active={mediaPlayerActive}>
-      <div className={styles.left}>
-        <span className={styles.date}>{displayDate}</span>
-        <span className={styles.clock}>{displayTime}</span>
-      </div>
-      {weather && (
-        <div className={styles.weather}>
-          <span className={`material-icons ${styles.weatherIcon}`}>{weather.icon}</span>
-          <span className={styles.weatherTemp}>{weather.temp}°{weather.unit}</span>
+  if (mediaPlayerActive) {
+    return (
+      <div className={styles.bar} data-media-active="true">
+        <div className={styles.leftCol}>
+          <span className={styles.date}>{displayDate}</span>
+          {weather && (
+            <div className={styles.weather}>
+              <span className={`material-icons ${styles.weatherIcon}`}>{weather.icon}</span>
+              <span className={styles.weatherTemp}>{weather.temp}°{weather.unit}</span>
+            </div>
+          )}
         </div>
-      )}
-      <span className={styles.build}>LumiThing Astra 1.2.5</span>
+        <span className={styles.clock}>{displayTime}</span>
+        <div className={styles.rightCol} />
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.bar}>
+      {/* Left: weather */}
+      <div className={styles.leftCol}>
+        {weather && (
+          <div className={styles.weather}>
+            <span className={`material-icons ${styles.weatherIcon}`}>{weather.icon}</span>
+            <span className={styles.weatherTemp}>{weather.temp}°{weather.unit}</span>
+          </div>
+        )}
+      </div>
+      {/* Center: clock */}
+      <span className={styles.clock}>{displayTime}</span>
+      {/* Right: date */}
+      <div className={styles.rightCol}>
+        <span className={styles.date}>{displayDate}</span>
+      </div>
     </div>
   )
 }
