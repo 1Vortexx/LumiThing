@@ -47,7 +47,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-          files: ./dist/lumithing-*-setup.exe
+          files: |
+            ./dist/lumithing-*-setup.exe
+            ./dist/latest.yml
 
   build-macos:
     runs-on: macos-latest
@@ -83,7 +85,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-          files: ./dist/lumithing-*.dmg
+          files: |
+            ./dist/lumithing-*.dmg
+            ./dist/latest-mac.yml
 
   build-linux:
     runs-on: ubuntu-latest
@@ -119,7 +123,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-          files: ./dist/lumithing-*.AppImage
+          files: |
+            ./dist/lumithing-*.AppImage
+            ./dist/latest-linux.yml
 
   build-client:
     runs-on: ubuntu-latest
