@@ -59,6 +59,7 @@ const App: React.FC = () => {
   const socketRef = useRef(socket)
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastImageRef = useRef<string | null>(null)
+  const lastEscapeRef = useRef<number>(0)
 
   actionsRef.current = actions
   socketRef.current = socket
@@ -129,10 +130,18 @@ const App: React.FC = () => {
           e.preventDefault(); actionsRef.current.skipForward(); break
         case 'ArrowLeft':
           e.preventDefault(); actionsRef.current.skipBackward(); break
-        case 'Escape':
+        case 'Escape': {
           e.preventDefault()
-          navigate('home')
+          const now = Date.now()
+          if (now - lastEscapeRef.current < 400) {
+            lastEscapeRef.current = 0
+            navigate('library')
+          } else {
+            lastEscapeRef.current = now
+            navigate('home')
+          }
           break
+        }
         case '1': case '2': case '3': case '4': {
           const id = buttonShortcutsRef.current[e.key as '1'|'2'|'3'|'4']
           if (!id) break

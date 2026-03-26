@@ -1,78 +1,285 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import { MediaContext } from '@/contexts/MediaContext.tsx'
+import { SocketContext } from '@/contexts/SocketContext.tsx'
 import styles from './LibraryView.module.css'
 
-interface TrackEntry {
-  name: string
-  artists: string[]
-  album: string
-  playedAt: number
+interface PlaylistItem { id: string; name: string; image: string | null; trackCount: number }
+interface AlbumItem    { id: string; name: string; artist: string; image: string | null }
+interface ArtistItem   { id: string; name: string; image: string | null }
+interface TrackItem    { id: string; name: string; artist: string; uri: string }
+
+type Section = 'playlists' | 'albums' | 'liked' | 'recent' | 'top' | 'artists'
+type Screen =
+  | { type: 'home' }
+  | { type: 'list'; section: Section }
+  | { type: 'tracks'; id: string; kind: 'playlist' | 'album' | 'artist'; title: string }
+
+const HOME_SECTIONS: { section: Section; label: string; icon: string }[] = [
+  { section: 'recent',    label: 'Recently Played', icon: 'access_time'  },
+  { section: 'top',       label: 'Top Tracks',       icon: 'grade'        },
+  { section: 'playlists', label: 'Playlists',        icon: 'queue_music'  },
+  { section: 'albums',    label: 'Albums',           icon: 'album'        },
+  { section: 'artists',   label: 'Artists',          icon: 'person'       },
+  { section: 'liked',     label: 'Liked Songs',      icon: 'favorite'     },
+]
+
+const SwipeRow: React.FC<{
+  onSwipeLeft: () => void
+  queued: boolean
+  children: React.ReactNode
+}> = ({ onSwipeLeft, queued, children }) => {
+  const startX = useRef(0)
+  return (
+    <div
+      className={`${styles.row} ${queued ? styles.rowQueued : ''}`}
+      onTouchStart={e => { startX.current = e.touches[0].clientX }}
+      onTouchEnd={e => {
+        if (startX.current - e.changedTouches[0].clientX > 60) onSwipeLeft()
+      }}
+    >
+      {children}
+      {queued && <span className={styles.queuedLabel}>Queued</span>}
+    </div>
+  )
 }
 
-const MAX_HISTORY = 20
-
 const LibraryView: React.FC = () => {
-  const { playerData, image } = useContext(MediaContext)
-  const [history, setHistory] = useState<TrackEntry[]>([])
-  const lastTrackRef = useRef<string | null>(null)
-  const imageRef = useRef<string | null>(null)
+  const { socket } = useContext(SocketContext)
+  const [screen, setScreen] = useState<Screen>({ type: 'home' })
+  const [loading, setLoading] = useState(false)
 
-  // Accumulate track history as songs change
+  const [playlists, setPlaylists]       = useState<PlaylistItem[]>([])
+  const [albums, setAlbums]             = useState<AlbumItem[]>([])
+  const [liked, setLiked]               = useState<TrackItem[]>([])
+  const [recentTracks, setRecentTracks] = useState<TrackItem[]>([])
+  const [topTracks, setTopTracks]       = useState<TrackItem[]>([])
+  const [artistList, setArtistList]     = useState<ArtistItem[]>([])
+  const [tracks, setTracks]             = useState<TrackItem[]>([])
+  const [queuedId, setQueuedId]         = useState<string | null>(null)
+  const [likedStatus, setLikedStatus]   = useState<Record<string, boolean>>({})
+  const [imageCache, setImageCache]     = useState<Record<string, string>>({})
+
+  const timerRef        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const requestedImages = useRef(new Set<string>())
+
+  function send(action: string, data?: unknown) {
+    socket?.send(JSON.stringify({ type: 'library', action, data }))
+  }
+
+  function requestImage(url: string | null | undefined) {
+    if (!url || imageCache[url] || requestedImages.current.has(url)) return
+    requestedImages.current.add(url)
+    send('image', { url })
+  }
+
   useEffect(() => {
-    if (!playerData) return
-    const name = playerData.track.name
-    if (name === lastTrackRef.current) return
-    lastTrackRef.current = name
-
-    setHistory(prev => {
-      const entry: TrackEntry = {
-        name,
-        artists: playerData.track.artists,
-        album: playerData.track.album,
-        playedAt: Date.now(),
+    if (!socket) return
+    const listener = (e: MessageEvent) => {
+      const msg = JSON.parse(e.data)
+      if (msg.type !== 'library') return
+      setLoading(false)
+      if      (msg.action === 'playlists')    setPlaylists(msg.data ?? [])
+      else if (msg.action === 'albums')       setAlbums(msg.data ?? [])
+      else if (msg.action === 'liked')        setLiked(msg.data ?? [])
+      else if (msg.action === 'recent')       setRecentTracks(msg.data ?? [])
+      else if (msg.action === 'top')          setTopTracks(msg.data ?? [])
+      else if (msg.action === 'artists')      setArtistList(msg.data ?? [])
+      else if (msg.action === 'tracks')       setTracks(msg.data ?? [])
+      else if (msg.action === 'image') {
+        const { url, base64 } = msg.data ?? {}
+        if (url && base64) setImageCache(prev => ({ ...prev, [url]: base64 }))
       }
-      // dedupe head, prepend
-      const filtered = prev.filter(t => t.name !== name || t.artists.join() !== entry.artists.join())
-      return [entry, ...filtered].slice(0, MAX_HISTORY)
-    })
-  }, [playerData?.track.name])
+      else if (msg.action === 'liked-status') {
+        const { ids, status } = msg.data ?? {}
+        if (Array.isArray(ids) && Array.isArray(status)) {
+          setLikedStatus(prev => {
+            const next = { ...prev }
+            ids.forEach((id: string, i: number) => { next[id] = status[i] })
+            return next
+          })
+        }
+      }
+      else if (msg.action === 'like_result') {
+        setLikedStatus(prev => ({ ...prev, [msg.data.id]: msg.data.state }))
+      }
+    }
+    socket.addEventListener('message', listener)
+    return () => socket.removeEventListener('message', listener)
+  }, [socket])
 
-  useEffect(() => { imageRef.current = image }, [image])
+  // Request images when lists load
+  useEffect(() => { playlists.forEach(p => requestImage(p.image)) }, [playlists])
+  useEffect(() => { albums.forEach(a => requestImage(a.image)) }, [albums])
+  useEffect(() => { artistList.forEach(a => requestImage(a.image)) }, [artistList])
 
-  if (history.length === 0) {
+  // Check liked status for track lists
+  useEffect(() => {
+    if (tracks.length > 0 && !loading) send('check-liked', { ids: tracks.map(t => t.id) })
+  }, [tracks, loading])
+  useEffect(() => {
+    if (liked.length > 0) setLikedStatus(prev => { const n = { ...prev }; liked.forEach(t => { n[t.id] = true }); return n })
+  }, [liked])
+  useEffect(() => {
+    if (recentTracks.length > 0 && !loading) send('check-liked', { ids: recentTracks.map(t => t.id) })
+  }, [recentTracks, loading])
+  useEffect(() => {
+    if (topTracks.length > 0 && !loading) send('check-liked', { ids: topTracks.map(t => t.id) })
+  }, [topTracks, loading])
+
+  function openSection(section: Section) {
+    setLoading(true)
+    setScreen({ type: 'list', section })
+    send(section)
+  }
+
+  function openTracks(id: string, kind: 'playlist' | 'album' | 'artist', title: string) {
+    setLoading(true)
+    setTracks([])
+    setScreen({ type: 'tracks', id, kind, title })
+    send('tracks', { id, type: kind })
+  }
+
+  function queueTrack(uri: string, id: string) {
+    send('queue', { uri })
+    setQueuedId(id)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => setQueuedId(null), 1500)
+  }
+
+  function toggleLike(id: string) {
+    const newState = !likedStatus[id]
+    setLikedStatus(prev => ({ ...prev, [id]: newState }))
+    send('like', { id, state: newState })
+  }
+
+  function back() {
+    if (screen.type === 'tracks') {
+      if (screen.kind === 'album')       setScreen({ type: 'list', section: 'albums' })
+      else if (screen.kind === 'artist') setScreen({ type: 'list', section: 'artists' })
+      else                               setScreen({ type: 'list', section: 'playlists' })
+    } else {
+      setScreen({ type: 'home' })
+    }
+  }
+
+  function Thumb({ url, fallbackIcon, circle }: { url: string | null; fallbackIcon: string; circle?: boolean }) {
+    const src = url ? imageCache[url] : null
     return (
-      <div className={styles.empty}>
-        <span className="material-icons">queue_music</span>
-        <p>Play something to see your history</p>
+      <div className={`${styles.thumb} ${circle ? styles.thumbCircle : ''}`}>
+        {src
+          ? <img src={src} alt="" className={styles.thumbImg} />
+          : <span className="material-icons">{fallbackIcon}</span>
+        }
       </div>
     )
   }
 
-  return (
-    <div className={styles.view}>
-      <p className={styles.heading}>Recents</p>
-      <div className={styles.list}>
-        {history.map((t, i) => (
-          <div key={i} className={styles.row} data-current={i === 0}>
-            <div className={styles.thumb}>
-              {i === 0 && image ? (
-                <img src={image} alt="" className={styles.thumbImg} />
-              ) : (
-                <span className="material-icons">music_note</span>
-              )}
-            </div>
-            <div className={styles.info}>
-              <p className={styles.name}>{t.name}</p>
-              <p className={styles.sub}>{t.artists.join(', ')} · {t.album}</p>
-            </div>
-            {i === 0 && (
-              <span className={styles.nowBadge}>Now</span>
-            )}
-          </div>
-        ))}
+  function TrackRow({ t }: { t: TrackItem }) {
+    return (
+      <SwipeRow onSwipeLeft={() => queueTrack(t.uri, t.id)} queued={queuedId === t.id}>
+        <div className={styles.thumb}><span className="material-icons">music_note</span></div>
+        <div className={styles.info}>
+          <p className={styles.name}>{t.name}</p>
+          <p className={styles.sub}>{t.artist}</p>
+        </div>
+        <button className={styles.likeBtn} onMouseDown={e => { e.stopPropagation(); toggleLike(t.id) }}>
+          <span className="material-icons" style={{ color: likedStatus[t.id] ? '#1db954' : 'rgba(255,255,255,0.2)' }}>
+            {likedStatus[t.id] ? 'favorite' : 'favorite_border'}
+          </span>
+        </button>
+      </SwipeRow>
+    )
+  }
+
+  if (screen.type === 'home') {
+    return (
+      <div className={styles.view}>
+        <p className={styles.heading}>Library</p>
+        <div className={styles.homeList}>
+          {HOME_SECTIONS.map(({ section, label, icon }) => (
+            <button key={section} className={styles.homeBtn} onClick={() => openSection(section)}>
+              <span className="material-icons">{icon}</span>
+              <span>{label}</span>
+              <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  const titleMap: Record<Section, string> = {
+    playlists: 'Playlists', albums: 'Albums', liked: 'Liked Songs',
+    recent: 'Recently Played', top: 'Top Tracks', artists: 'Artists',
+  }
+
+  if (screen.type === 'list') {
+    const { section } = screen
+    return (
+      <div className={styles.view}>
+        <div className={styles.header}>
+          <button className={styles.backBtn} onClick={back}>
+            <span className="material-icons">arrow_back_ios</span>
+          </button>
+          <p className={styles.heading}>{titleMap[section]}</p>
+        </div>
+        <div className={styles.list}>
+          {loading ? (
+            <div className={styles.loadingRow}><span className="material-icons">hourglass_empty</span></div>
+          ) : section === 'playlists' ? playlists.map(p => (
+            <button key={p.id} className={styles.row} onClick={() => openTracks(p.id, 'playlist', p.name)}>
+              <Thumb url={p.image} fallbackIcon="queue_music" />
+              <div className={styles.info}>
+                <p className={styles.name}>{p.name}</p>
+                <p className={styles.sub}>{p.trackCount} tracks</p>
+              </div>
+              <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
+            </button>
+          )) : section === 'albums' ? albums.map(a => (
+            <button key={a.id} className={styles.row} onClick={() => openTracks(a.id, 'album', a.name)}>
+              <Thumb url={a.image} fallbackIcon="album" />
+              <div className={styles.info}>
+                <p className={styles.name}>{a.name}</p>
+                <p className={styles.sub}>{a.artist}</p>
+              </div>
+              <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
+            </button>
+          )) : section === 'artists' ? artistList.map(a => (
+            <button key={a.id} className={styles.row} onClick={() => openTracks(a.id, 'artist', a.name)}>
+              <Thumb url={a.image} fallbackIcon="person" circle />
+              <div className={styles.info}>
+                <p className={styles.name}>{a.name}</p>
+              </div>
+              <span className={`material-icons ${styles.chevron}`}>chevron_right</span>
+            </button>
+          )) : section === 'liked' ? liked.map(t => <TrackRow key={t.id} t={t} />)
+            : section === 'recent' ? recentTracks.map(t => <TrackRow key={t.id} t={t} />)
+            : topTracks.map(t => <TrackRow key={t.id} t={t} />)
+          }
+        </div>
+      </div>
+    )
+  }
+
+  if (screen.type === 'tracks') {
+    return (
+      <div className={styles.view}>
+        <div className={styles.header}>
+          <button className={styles.backBtn} onClick={back}>
+            <span className="material-icons">arrow_back_ios</span>
+          </button>
+          <p className={`${styles.heading} ${styles.headingTrunc}`}>{screen.title}</p>
+        </div>
+        <div className={styles.list}>
+          {loading
+            ? <div className={styles.loadingRow}><span className="material-icons">hourglass_empty</span></div>
+            : tracks.map(t => <TrackRow key={t.id} t={t} />)
+          }
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default LibraryView

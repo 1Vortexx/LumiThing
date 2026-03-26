@@ -33,6 +33,15 @@ const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
       }
     },
     {
+      name: 'Library',
+      icon: 'library_music',
+      color: '#1db954',
+      onClick: () => {
+        setShown(false)
+        onNavigate('library')
+      }
+    },
+    {
       name: 'Restore',
       icon: 'settings_backup_restore',
       color: '#ff3838',
