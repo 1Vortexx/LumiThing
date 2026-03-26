@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload assets to (e.g. v1.1.4)'
+        required: true
 
 permissions:
   contents: write
@@ -40,9 +44,9 @@ jobs:
           path: ./dist/lumithing-*-setup.exe
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           files: ./dist/lumithing-*-setup.exe
 
   build-macos:
@@ -76,9 +80,9 @@ jobs:
           path: ./dist/lumithing-*.dmg
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           files: ./dist/lumithing-*.dmg
 
   build-linux:
@@ -112,9 +116,9 @@ jobs:
           path: ./dist/lumithing-*.AppImage
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           files: ./dist/lumithing-*.AppImage
 
   build-client:
@@ -149,7 +153,7 @@ jobs:
           path: ./client/dist
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           files: /tmp/lumithing-client-*.zip
