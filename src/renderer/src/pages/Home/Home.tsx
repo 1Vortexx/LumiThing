@@ -119,6 +119,20 @@ const Home: React.FC = () => {
             Run Setup
           </button>
         )}
+        {carThingState === CarThingState.Ready && (
+          <button
+            className={styles.actionBtn}
+            disabled={installingToCarThing}
+            onClick={async () => {
+              setInstallingToCarThing(true)
+              await window.api.installApp()
+              setInstallingToCarThing(false)
+            }}
+          >
+            <span className="material-icons">refresh</span>
+            {installingToCarThing ? 'Reinstalling...' : 'Reinstall'}
+          </button>
+        )}
       </div>
 
       {/* Notices */}

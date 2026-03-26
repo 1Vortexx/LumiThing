@@ -40,9 +40,6 @@ const Settings: React.FC = () => {
     }
   }, [openModals.includes('settings'), currentTab])
 
-  useEffect(() => {
-    if (!devMode && currentTab === Tab.Advanced) setCurrentTab(Tab.General)
-  })
 
   return (
     <div
@@ -87,24 +84,22 @@ const Settings: React.FC = () => {
               <span className="material-icons">security</span>
               Startup
             </button>
-            {devMode ? (
-              <>
-                <button
-                  onClick={() => setCurrentTab(Tab.Advanced)}
-                  data-active={currentTab === Tab.Advanced}
-                >
-                  <span className="material-icons">code</span>
-                  Advanced
-                </button>
-                <button
-                  onClick={() => setCurrentTab(Tab.Logs)}
-                  data-active={currentTab === Tab.Logs}
-                >
-                  <span className="material-icons">description</span>
-                  Logs
-                </button>
-              </>
-            ) : null}
+            <button
+              onClick={() => setCurrentTab(Tab.Advanced)}
+              data-active={currentTab === Tab.Advanced}
+            >
+              <span className="material-icons">code</span>
+              Advanced
+            </button>
+            {devMode && (
+              <button
+                onClick={() => setCurrentTab(Tab.Logs)}
+                data-active={currentTab === Tab.Logs}
+              >
+                <span className="material-icons">description</span>
+                Logs
+              </button>
+            )}
             <button
               onClick={() => setCurrentTab(Tab.Buttons)}
               data-active={currentTab === Tab.Buttons}
@@ -387,10 +382,17 @@ const ClientTab: React.FC = () => {
     autoBrightness?: boolean
     brightness?: number
     sleepMethod?: string
+    weatherCity?: string
+    weatherUnit?: string
   }>({})
 
   const [autoBrightness, setAutoBrightness] = useState(false)
   const [sleepMethod, setSleepMethod] = useState('sleep')
+  const [weatherStatus, setWeatherStatus] = useState<{
+    message: string
+    status: 'error' | 'success' | 'loading'
+  } | null>(null)
+  const [screensaverStyle, setScreensaverStyle] = useState('bubbles')
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
     | false
@@ -411,10 +413,13 @@ const ClientTab: React.FC = () => {
         brightness: ((await window.api.getStorageValue('brightness')) ??
           0.5) as number,
         sleepMethod: ((await window.api.getStorageValue('sleepMethod')) ||
-          'sleep') as string
+          'sleep') as string,
+        weatherCity: ((await window.api.getStorageValue('weatherCity')) || '') as string,
+        weatherUnit: ((await window.api.getStorageValue('weatherUnit')) || 'fahrenheit') as string
       }
       setAutoBrightness(settings.current.autoBrightness ?? false)
       setSleepMethod(settings.current.sleepMethod ?? 'sleep')
+      setScreensaverStyle(((await window.api.getStorageValue('screensaverStyle')) || 'bubbles') as string)
 
       const hasImage = await window.api.hasCustomScreensaverImage()
       setHasCustomImage(hasImage)
@@ -500,6 +505,41 @@ const ClientTab: React.FC = () => {
             window.api.setStorageValue('brightness', value as number)
           }
         />
+        <InputSubmitSetting
+          label="Weather City"
+          description="City name to show weather in the TopBar. Leave empty to disable."
+          defaultValue={settings.current.weatherCity ?? ''}
+          placeholder="e.g. New York"
+          submitLabel="Set"
+          onSubmit={async value => {
+            await window.api.setStorageValue('weatherCity', value || null)
+            if (!value) { setWeatherStatus(null); return }
+            setWeatherStatus({ message: 'Fetching weather...', status: 'loading' })
+            const result = await window.api.refreshWeather()
+            setWeatherStatus({ message: result.message, status: result.success ? 'success' : 'error' })
+          }}
+        />
+        {weatherStatus && (
+          <div
+            className={styles.status}
+            data-type={weatherStatus.status === 'loading' ? undefined : weatherStatus.status}
+          >
+            <span className="material-icons">
+              {weatherStatus.status === 'error' ? 'error_outline' : weatherStatus.status === 'loading' ? 'hourglass_empty' : 'check_circle'}
+            </span>
+            {weatherStatus.message}
+          </div>
+        )}
+        <SelectSetting
+          label="Temperature Unit"
+          description="Unit for weather temperature display."
+          defaultValue={settings.current.weatherUnit ?? 'fahrenheit'}
+          options={[
+            { value: 'fahrenheit', label: '°F — Fahrenheit' },
+            { value: 'celsius', label: '°C — Celsius' }
+          ]}
+          onChange={value => window.api.setStorageValue('weatherUnit', value as string)}
+        />
         <SelectSetting
           label="Sleep Method"
           description="Method used for putting the CarThing to sleep"
@@ -519,6 +559,19 @@ const ClientTab: React.FC = () => {
 
         {sleepMethod === 'screensaver' && (
           <div className={styles.screensaverSettings}>
+            <SelectSetting
+              label="Screensaver Style"
+              description="Choose what is shown when the screensaver is active."
+              value={screensaverStyle}
+              options={[
+                { value: 'bubbles', label: 'Bubbles' },
+                { value: 'clock', label: 'Clock' }
+              ]}
+              onChange={value => {
+                window.api.setStorageValue('screensaverStyle', value as string)
+                setScreensaverStyle(value as string)
+              }}
+            />
             <div className={styles.header}>
               <div className={styles.text}>
                 <p className={styles.label}>Custom Screensaver Image</p>
@@ -748,7 +801,7 @@ const StartupTab: React.FC = () => {
 }
 
 const AdvancedTab: React.FC = () => {
-  const { setDevMode } = useContext(DevModeContext)
+  const { devMode, setDevMode } = useContext(DevModeContext)
   const [loaded, setLoaded] = useState(false)
   const settings = useRef<{
     disableSocketAuth?: boolean
@@ -826,8 +879,8 @@ const AdvancedTab: React.FC = () => {
         <ToggleSetting
           label="Developer Mode"
           description="Enables some options for development purposes."
-          defaultValue={true}
-          onChange={() => setDevMode(false)}
+          value={devMode}
+          onChange={value => setDevMode(value)}
         />
         <SelectSetting
           label="Log Level"

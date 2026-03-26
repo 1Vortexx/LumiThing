@@ -22,6 +22,12 @@ export async function getWebAppDir() {
     return path.join(process.cwd(), 'client/dist')
   }
 
+  const bundledClient = path.join(process.resourcesPath, 'client')
+  if (!isDev() && fs.existsSync(bundledClient)) {
+    log('Using bundled client webapp', 'Client Webapp')
+    return bundledClient
+  }
+
   log('Downloading...', 'Client Webapp')
   const version = app.getVersion()
   const tempDir = app.getPath('temp')

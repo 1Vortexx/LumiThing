@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styles from './SettingsView.module.css'
 
 export type SleepTimer = '0' | '60' | '300' | '600'
+export type ScreensaverType = 'bubbles' | 'clock'
 
 export interface SettingsValues {
   sleepTimer: SleepTimer
@@ -39,8 +40,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onChange }) => {
     const next = { ...v, [key]: value }
     setV(next)
     onChange(next)
-    if (key === 'sleepTimer')  persist('lumi_sleep', value as string)
-    if (key === 'visualizer')  persist('lumi_visualizer', String(value))
+    if (key === 'sleepTimer') persist('lumi_sleep', value as string)
+    if (key === 'visualizer') persist('lumi_visualizer', String(value))
   }
 
   useEffect(() => { onChange(v) }, [])

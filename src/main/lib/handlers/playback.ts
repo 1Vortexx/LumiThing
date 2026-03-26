@@ -9,23 +9,28 @@ export const name = 'playback'
 
 export const hasActions = true
 
+const refresh = (delay = 600) => setTimeout(() => playbackManager.refreshPlayback(), delay)
+
 export const actions: HandlerAction[] = [
   {
     action: 'pause',
     handle: async () => {
       await playbackManager.pause()
+      refresh()
     }
   },
   {
     action: 'play',
     handle: async () => {
       await playbackManager.play()
+      refresh()
     }
   },
   {
     action: 'volume',
     handle: async (_ws, data) => {
       await playbackManager.setVolume((data as { volume: number }).volume)
+      refresh()
     }
   },
   {
@@ -45,24 +50,28 @@ export const actions: HandlerAction[] = [
     action: 'previous',
     handle: async () => {
       await playbackManager.previous()
+      refresh(1000)
     }
   },
   {
     action: 'next',
     handle: async () => {
       await playbackManager.next()
+      refresh(1000)
     }
   },
   {
     action: 'shuffle',
     handle: async (_, data) => {
       await playbackManager.shuffle((data as { state: boolean }).state)
+      refresh()
     }
   },
   {
     action: 'repeat',
     handle: async (_, data) => {
       await playbackManager.repeat((data as { state: RepeatMode }).state)
+      refresh()
     }
   }
 ]

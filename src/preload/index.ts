@@ -54,7 +54,8 @@ enum IPCHandler {
   OpenExternal = 'openExternal',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
-  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
+  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl',
+  RefreshWeather = 'refreshWeather'
 }
 
 // Custom APIs for renderer
@@ -139,7 +140,8 @@ const api = {
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
   isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
   saveShortcutIconFromDataUrl: (id: string, dataUrl: string) =>
-    ipcRenderer.invoke(IPCHandler.SaveShortcutIconFromDataUrl, id, dataUrl)
+    ipcRenderer.invoke(IPCHandler.SaveShortcutIconFromDataUrl, id, dataUrl),
+  refreshWeather: () => ipcRenderer.invoke(IPCHandler.RefreshWeather)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

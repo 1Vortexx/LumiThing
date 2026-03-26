@@ -2,8 +2,10 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 
 import { SleepState } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
+import { ScreensaverType } from '@/components/SettingsView/SettingsView.tsx'
 
 import styles from './Screensaver.module.css'
+
 
 interface ScreensaverProps {
   type: SleepState
@@ -15,6 +17,10 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const { ready, socket } = useContext(SocketContext)
   const [loaded, setLoaded] = useState(false)
   const [customImage, setCustomImage] = useState<string | null>(null)
+  const [screensaverType, setScreensaverType] = useState<ScreensaverType>(() =>
+    (localStorage.getItem('lumi_screensaver_type') as ScreensaverType) ?? 'bubbles'
+  )
+  const [serverClock, setServerClock] = useState<{ time: string; date: string } | null>(null)
 
   const validateImage = useCallback(
     (imageUrl: string): Promise<boolean> => {
@@ -69,6 +75,10 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
 
     const listener = (e: MessageEvent) => {
       const data = JSON.parse(e.data)
+      if (data.type === 'time') {
+        setServerClock(data.data)
+        return
+      }
       if (data.type !== 'screensaver') return
 
       switch (data.action) {
@@ -119,12 +129,14 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   useEffect(() => {
     if (type === 'screensaver') {
       setLoaded(true)
+      setScreensaverType((localStorage.getItem('lumi_screensaver_type') as ScreensaverType) ?? 'bubbles')
     } else {
       setTimeout(() => {
         setLoaded(false)
       }, 500)
     }
   }, [type])
+
 
   return (
     <div className={styles.screensaver} data-active={type !== 'off'}>
@@ -135,6 +147,12 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
               className={styles.customImage}
               style={{ backgroundImage: `url(${customImage})` }}
             ></div>
+          ) : screensaverType === 'clock' ? (
+            <div className={styles.clockDisplay}>
+              <span className={styles.clockTime}>{serverClock?.time ?? '—'}</span>
+              <div className={styles.clockDivider} />
+              <span className={styles.clockDate}>{serverClock?.date ?? ''}</span>
+            </div>
           ) : (
             <>
               <div className={styles.circle1}></div>
