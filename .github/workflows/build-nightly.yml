@@ -1,4 +1,4 @@
-name: Build GlanceThing Nightly
+name: Build LumiThing Nightly
 
 on:
   push:
@@ -35,8 +35,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: glancething-nightly-windows-${{ github.ref_name }}
-          path: ./dist/glancething-nightly-*-setup.exe
+          name: lumithing-nightly-windows-${{ github.ref_name }}
+          path: ./dist/lumithing-nightly-*-setup.exe
 
   build-macos:
     runs-on: macos-latest
@@ -59,8 +59,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: glancething-nightly-macos-${{ github.ref_name }}
-          path: ./dist/glancething-nightly-*.dmg
+          name: lumithing-nightly-macos-${{ github.ref_name }}
+          path: ./dist/lumithing-nightly-*.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -83,8 +83,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: glancething-nightly-linux-${{ github.ref_name }}
-          path: ./dist/glancething-nightly-*.AppImage
+          name: lumithing-nightly-linux-${{ github.ref_name }}
+          path: ./dist/lumithing-nightly-*.AppImage
 
 
   build-client:
@@ -111,5 +111,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: glancething-nightly-client-${{ github.ref_name }}
+          name: lumithing-nightly-client-${{ github.ref_name }}
           path: ./client/dist

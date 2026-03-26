@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import styles from './TopBar.module.css'
 
+interface WeatherInfo {
+  temp: number
+  unit: 'F' | 'C'
+  icon: string
+  condition: string
+}
+
 interface TopBarProps {
   clockFormat: '12h' | '24h'
   serverTime: { time: string; date: string } | null
+  mediaPlayerActive?: boolean
+  weather?: WeatherInfo | null
 }
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -27,7 +36,7 @@ function formatDate(now: Date) {
   return `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`
 }
 
-const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime }) => {
+const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerActive, weather }) => {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -39,12 +48,18 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime }) => {
   const displayDate = serverTime?.date ?? formatDate(now)
 
   return (
-    <div className={styles.bar}>
+    <div className={styles.bar} data-media-active={mediaPlayerActive}>
       <div className={styles.left}>
         <span className={styles.date}>{displayDate}</span>
         <span className={styles.clock}>{displayTime}</span>
       </div>
-      <span className={styles.build}>LumiThing Astra1.0.1</span>
+      {weather && (
+        <div className={styles.weather}>
+          <span className={`material-icons ${styles.weatherIcon}`}>{weather.icon}</span>
+          <span className={styles.weatherTemp}>{weather.temp}°{weather.unit}</span>
+        </div>
+      )}
+      <span className={styles.build}>LumiThing Astra 1.1.3</span>
     </div>
   )
 }

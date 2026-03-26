@@ -10,17 +10,23 @@ export const name = 'playback'
 
 let retryTimeout: NodeJS.Timeout | null = null
 
-export const setup: SetupFunction = async () => {
-  playbackManager.on('playback', data => {
-    const wss = serverManager.getServer()
-    if (!wss) return
-
-    wss.clients.forEach(async (ws: AuthenticatedWebSocket) => {
-      if (!ws.authenticated && ws.readyState !== WebSocket.OPEN) return
-
-      ws.send(JSON.stringify({ type: 'playback', data }))
-    })
+function broadcast(data: unknown) {
+  const wss = serverManager.getServer()
+  if (!wss) return
+  wss.clients.forEach((ws: AuthenticatedWebSocket) => {
+    if (!ws.authenticated || ws.readyState !== 1) return
+    ws.send(JSON.stringify({ type: 'playback', data }))
   })
+}
+
+export const setup: SetupFunction = async () => {
+  playbackManager.on('playback', data => broadcast(data))
+
+  const pollInterval = setInterval(async () => {
+    const data = await playbackManager.getPlayback()
+    if (!data) return
+    broadcast(data)
+  }, 3000)
 
   playbackManager.on('close', async () => {
     await playbackManager.cleanup()
@@ -81,6 +87,7 @@ export const setup: SetupFunction = async () => {
   }
 
   return async () => {
+    clearInterval(pollInterval)
     if (retryTimeout) {
       clearInterval(retryTimeout)
       retryTimeout = null

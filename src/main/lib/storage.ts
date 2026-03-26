@@ -13,6 +13,7 @@ import {
 } from './utils.js'
 
 import { setAutoBrightness, setBrightnessSmooth } from './adb.js'
+import { fetchAndBroadcastWeather } from './weather.js'
 import { serverManager } from './server.js'
 import { updateTime } from './time.js'
 
@@ -42,6 +43,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
     await setBrightnessSmooth(null, value as number)
   },
   bgStyle: value => broadcast('bgstyle', value),
+  screensaverStyle: value => broadcast('screensaverstyle', value),
+  weatherCity: () => { fetchAndBroadcastWeather() },
+  weatherUnit: () => { fetchAndBroadcastWeather() },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null
@@ -102,7 +106,14 @@ export function getStorageValue(key: string, secure = false) {
       )
       return value
     }
-    return safeStorage.decryptString(Buffer.from(value, 'hex')).toString()
+    try {
+      return safeStorage.decryptString(Buffer.from(value, 'hex')).toString()
+    } catch {
+      log(`Failed to decrypt value for key: ${key}, clearing it.`, 'Storage', LogLevel.WARN)
+      delete storage[key]
+      writeStorage(storage)
+      return null
+    }
   } else {
     return value
   }

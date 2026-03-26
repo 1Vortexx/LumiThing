@@ -39,3 +39,63 @@
   color: rgba(255, 255, 255, 0.2);
   letter-spacing: 0.04em;
 }
+
+.weather {
+  margin-left: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: translateY(-5px);
+}
+
+.weatherIcon {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.weatherTemp {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.01em;
+}
+
+.bar[data-media-active='true'] {
+  height: 64px;
+}
+
+.bar[data-media-active='true'] .left {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.bar[data-media-active='true'] .clock {
+  font-size: 38px;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.03em;
+  order: -1;
+}
+
+.bar[data-media-active='true'] .date {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.5);
+  position: relative;
+  left: 20px;
+  top: -10px;
+}
+
+.bar[data-media-active='true'] .weather {
+  gap: 6px;
+}
+
+.bar[data-media-active='true'] .weatherIcon {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bar[data-media-active='true'] .weatherTemp {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+}

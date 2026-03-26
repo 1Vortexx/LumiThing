@@ -33,7 +33,7 @@ class PlaybackManager extends (EventEmitter as new () => TypedEmitter<PlaybackHa
 
     const handler = this.getHandler(handlerName)
     const config = await getPlaybackHandlerConfig(handlerName)
-    if (!handler.validateConfig(config)) {
+    if (!config || !handler.validateConfig(config)) {
       this.emit(
         'error',
         new Error(`Invalid config for handler ${handlerName}`)
@@ -130,6 +130,11 @@ class PlaybackManager extends (EventEmitter as new () => TypedEmitter<PlaybackHa
   async getImage(): Promise<Buffer | null> {
     if (!this.currentHandler) return null
     return this.currentHandler.getImage()
+  }
+
+  async refreshPlayback(): Promise<void> {
+    const data = await this.getPlayback()
+    this.emit('playback', data)
   }
 }
 

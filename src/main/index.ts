@@ -71,6 +71,7 @@ import {
   importCustomWebApp,
   removeCustomWebApp
 } from './lib/webapp.js'
+import { fetchAndBroadcastWeather } from './lib/weather.js'
 import {
   uploadScreensaverImage,
   removeScreensaverImage,
@@ -278,7 +279,8 @@ enum IPCHandler {
   OpenExternal = 'openExternal',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
-  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl'
+  SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl',
+  RefreshWeather = 'refreshWeather'
 }
 
 async function setupIpcHandlers() {
@@ -591,6 +593,10 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.IsPortOpen, async (_event, port) => {
     return await isPortOpen(port as number)
+  })
+
+  ipcMain.handle(IPCHandler.RefreshWeather, async () => {
+    return await fetchAndBroadcastWeather()
   })
 }
 

@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [buttonShortcuts, setButtonShortcuts] = useState<ButtonShortcuts>({ '1': null, '2': null, '3': null, '4': null })
   const [serverTime, setServerTime] = useState<{ time: string; date: string } | null>(null)
   const [bgStyle, setBgStyle] = useState<BgStyle>('full')
+  const [weather, setWeather] = useState<{ temp: number; unit: 'F' | 'C'; icon: string; condition: string } | null>(null)
   const buttonShortcutsRef = useRef(buttonShortcuts)
   buttonShortcutsRef.current = buttonShortcuts
 
@@ -71,6 +72,10 @@ const App: React.FC = () => {
         setServerTime(data)
       } else if (type === 'bgstyle') {
         setBgStyle(data as BgStyle)
+      } else if (type === 'screensaverstyle') {
+        try { localStorage.setItem('lumi_screensaver_type', data as string) } catch {}
+      } else if (type === 'weather') {
+        setWeather(data)
       } else if (type === 'buttons') {
         setButtonShortcuts(data)
       } else if (type === 'apps' && !action) {
@@ -84,6 +89,8 @@ const App: React.FC = () => {
     socket.addEventListener('message', listener)
     socket.send(JSON.stringify({ type: 'time' }))
     socket.send(JSON.stringify({ type: 'bgstyle' }))
+    socket.send(JSON.stringify({ type: 'screensaverstyle' }))
+    socket.send(JSON.stringify({ type: 'weather' }))
     return () => socket.removeEventListener('message', listener)
   }, [socket])
 
@@ -149,7 +156,7 @@ const App: React.FC = () => {
     <>
       <div className={styles.app} data-blurred={blurred || !ready}>
         <Background image={image} useStatic={activeTab !== 'nowplaying'} bgStyle={bgStyle} />
-        <TopBar clockFormat="12h" serverTime={serverTime} />
+        <TopBar clockFormat="12h" serverTime={serverTime} mediaPlayerActive={activeTab === 'nowplaying'} weather={weather} />
 
         <main className={styles.content}>
           {activeTab === 'home'       && <HomeView onNavigate={navigate} />}

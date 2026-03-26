@@ -79,6 +79,7 @@ declare global {
         id: string,
         dataUrl: string
       ) => Promise<void>
+      refreshWeather: () => Promise<{ success: boolean; message: string }>
     }
   }
 }

@@ -33,7 +33,7 @@
 }
 
 .source {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
   white-space: nowrap;
@@ -42,7 +42,7 @@
 }
 
 .trackName {
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 800;
   color: #ffffff;
   line-height: 1.1;
@@ -54,7 +54,7 @@
 }
 
 .artist {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
