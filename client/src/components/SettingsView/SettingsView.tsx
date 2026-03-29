@@ -100,11 +100,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onChange }) => {
         </div>
         <div className={styles.aboutRow}>
           <span className={styles.aboutKey}>Version</span>
-          <span className={styles.aboutVal}>1.2.5</span>
+          <span className={styles.aboutVal}>1.2.6</span>
         </div>
         <div className={styles.aboutRow}>
           <span className={styles.aboutKey}>Build</span>
-          <span className={styles.aboutVal}>1.2.5.3461</span>
+          <span className={styles.aboutVal}>1.2.6.3461</span>
         </div>
         <div className={styles.aboutRow}>
           <span className={styles.aboutKey}>Platform</span>

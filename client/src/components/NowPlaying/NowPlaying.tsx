@@ -145,11 +145,7 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ bgStyle = 'full' }) => {
 
   return (
     <div className={styles.screen}>
-      <VolumeOverlay volume={volume} visible={volumeVisible} />
-      <div className={styles.maxToast} data-visible={volMaxed}>
-        <span className="material-icons">volume_up</span>
-        Volume is maxed
-      </div>
+      <VolumeOverlay volume={volume} visible={volumeVisible || volMaxed} maxed={volMaxed} />
 
       {/* ── Top: track info + visualizer ── */}
       <div className={`${styles.top}${bgStyle === 'thumbnail' ? ` ${styles.topThumbnail}` : ''}`}>

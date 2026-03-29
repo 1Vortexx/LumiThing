@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
+import { MediaContext } from '@/contexts/MediaContext.tsx'
 import styles from './TopBar.module.css'
 
 interface WeatherInfo {
@@ -37,6 +38,7 @@ function formatDate(now: Date) {
 }
 
 const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerActive, weather }) => {
+  const { playerData } = useContext(MediaContext)
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -60,7 +62,16 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerAct
           )}
         </div>
         <span className={styles.clock}>{displayTime}</span>
-        <div className={styles.rightCol} />
+        <div className={styles.rightCol}>
+          {playerData && (
+            <div className={styles.volIndicator} data-maxed={playerData.volume >= 100}>
+              <span className="material-icons">
+                {playerData.volume === 0 ? 'volume_off' : playerData.volume < 50 ? 'volume_down' : 'volume_up'}
+              </span>
+              {Math.round(playerData.volume)}%
+            </div>
+          )}
+        </div>
       </div>
     )
   }
