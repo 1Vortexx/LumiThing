@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for showing interest in contributing to GlanceThing! This document will lay out some of the policies, processes and expectations for contributing to the project.
+Thank you for showing interest in contributing to LumiThing! This document will lay out some of the policies, processes and expectations for contributing to the project.
 
 ## Code of Conduct
 
